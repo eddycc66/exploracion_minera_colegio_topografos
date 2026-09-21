@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exploración Mineral Multisensor — ASTER + Sentinel-2 + Landsat · Curso Didáctico v1.0</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #7d8590;
+  --gold: #d29922;
+  --gold-light: #f0c862;
+  --blue: #388bfd;
+  --blue-dark: #0d419d;
+  --blue-bg: #0d1f3c;
+  --green: #3fb950;
+  --green-bg: #0a1f0a;
+  --amber: #e3b341;
+  --amber-bg: #1f1600;
+  --red: #f85149;
+  --red-bg: #1f0a0a;
+  --purple: #bc8cff;
+  --purple-bg: #1a0f2e;
+  --teal: #39d0d0;
+  --teal-bg: #0a1f1f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6}
+
+/* TOPBAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:200;height:52px}
+.topbar-brand{padding:0 20px;font-weight:700;font-size:14px;color:var(--gold);display:flex;align-items:center;gap:8px;border-right:1px solid var(--border);height:100%;white-space:nowrap}
+.topbar-tabs{display:flex;height:100%;overflow-x:auto}
+.tab-btn{padding:0 16px;font-size:13px;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;height:100%}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+
+/* PROGRESS */
+.progress-bar-wrap{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 40px;display:flex;align-items:center;gap:0}
+.prog-item{display:flex;align-items:center;gap:0;flex:1;min-width:0;cursor:pointer}
+.prog-item:hover .prog-label{color:var(--text)}
+.prog-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;transition:all .2s;border:2px solid var(--border);background:var(--bg3);color:var(--muted)}
+.prog-dot.done{background:#0d3319;border-color:var(--green);color:var(--green)}
+.prog-dot.active{background:var(--blue-dark);border-color:var(--blue);color:#fff}
+.prog-label{font-size:11px;color:var(--muted);padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
+.prog-label.active{color:var(--blue);font-weight:500}
+.prog-line{flex:1;height:2px;background:var(--border);min-width:12px}
+.prog-line.done{background:var(--green)}
+
+/* LAYOUT */
+.layout{display:flex;max-width:1180px;margin:0 auto;min-height:calc(100vh - 52px - 53px)}
+
+/* SIDEBAR */
+.sidebar{width:230px;flex-shrink:0;padding:20px 0;border-right:1px solid var(--border);background:var(--bg);position:sticky;top:52px;height:fit-content;max-height:calc(100vh - 52px);overflow-y:auto}
+.sb-group{padding:0 12px;margin-bottom:4px}
+.sb-group-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 8px 4px}
+.sb-link{display:block;padding:6px 10px;border-radius:6px;font-size:13px;color:var(--muted);cursor:pointer;background:none;border:none;width:100%;text-align:left;transition:background .12s,color .12s}
+.sb-link:hover{background:var(--bg3);color:var(--text)}
+.sb-link.active{background:#0d2040;color:var(--blue);font-weight:500}
+
+/* CONTENT */
+.content{flex:1;padding:32px 40px;min-width:0}
+.lesson{display:none}
+.lesson.active{display:block}
+
+/* LESSON HEADER */
+.lesson-tag{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.lesson-tag::before{content:'';display:inline-block;width:3px;height:14px;background:var(--blue);border-radius:2px}
+.lesson-h1{font-size:1.75rem;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.25}
+.lesson-intro{color:var(--muted);margin-bottom:32px;font-size:15px;max-width:660px}
+
+/* SECTION TITLES */
+.sh{font-size:14px;font-weight:600;color:var(--text);margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sh3{font-size:13px;font-weight:600;color:var(--muted);margin:20px 0 8px;text-transform:uppercase;letter-spacing:.04em}
+p{color:#b0bec5;margin-bottom:14px;font-size:14px}
+code{font-family:'Cascadia Code','Fira Code','Courier New',monospace;background:#1c2128;color:#f2cc60;padding:1px 6px;border-radius:4px;font-size:12.5px}
+
+/* CALLOUT BOXES */
+.callout{border-radius:8px;padding:14px 16px;margin:16px 0;font-size:13px;line-height:1.7;display:flex;gap:12px}
+.callout-icon{font-size:18px;flex-shrink:0;line-height:1.4}
+.callout-body{}
+.callout-title{font-weight:600;margin-bottom:4px;font-size:13px}
+.call-info{background:var(--blue-bg);border:1px solid #1f4080;color:#79b8ff}
+.call-info .callout-title{color:#79b8ff}
+.call-warn{background:var(--amber-bg);border:1px solid #3d2800;color:var(--amber)}
+.call-warn .callout-title{color:var(--amber)}
+.call-ok{background:var(--green-bg);border:1px solid #1a4020;color:#7ee787}
+.call-ok .callout-title{color:#7ee787}
+.call-red{background:var(--red-bg);border:1px solid #3d1010;color:#f47067}
+.call-red .callout-title{color:var(--red)}
+
+/* CODE BLOCKS */
+.code-wrap{border-radius:8px;border:1px solid var(--border);overflow:hidden;margin:14px 0 20px;font-size:13px}
+.code-header{background:#161b22;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-lang{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.code-note{font-size:11px;color:var(--muted)}
+.code-wrap pre{background:#0d1117;padding:18px 20px;overflow-x:auto;line-height:1.75;font-family:'Cascadia Code','Fira Code','Courier New',monospace}
+.kw{color:#ff7b72}.fn{color:#79c0ff}.str{color:#a5d6ff}.num{color:#f2cc60}.cm{color:#8b949e;font-style:italic}.var{color:#ffa657}.op{color:#79c0ff}.prop{color:#7ee787}.punc{color:#e6edf3}
+
+/* GRID CARDS */
+.grid{display:grid;gap:14px;margin:14px 0 20px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;transition:border-color .15s}
+.card:hover{border-color:#484f58}
+.card-icon{font-size:22px;margin-bottom:8px}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+.card-body{font-size:12px;color:var(--muted);line-height:1.6}
+.card.blue{border-color:#1f4080;background:var(--blue-bg)}
+.card.green{border-color:#1a4020;background:var(--green-bg)}
+.card.amber{border-color:#3d2800;background:var(--amber-bg)}
+.card.purple{border-color:#3a1f60;background:var(--purple-bg)}
+.card.teal{border-color:#0a3030;background:var(--teal-bg)}
+.card.red{border-color:#3d1010;background:var(--red-bg)}
+
+/* MINERAL INDEX TABLE */
+.mtable{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0 20px}
+.mtable th{background:var(--bg3);color:var(--muted);font-weight:600;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.mtable td{padding:10px 12px;border-bottom:1px solid #21262d;vertical-align:top;color:#b0bec5}
+.mtable tr:hover td{background:#161b22}
+.mtable td:first-child{font-weight:600;color:var(--text);white-space:nowrap}
+.formula{font-family:'Cascadia Code','Courier New',monospace;color:#f2cc60;font-size:12px;background:#1a1600;padding:2px 7px;border-radius:4px;display:inline-block}
+.ref-tag{font-size:10px;color:var(--muted);display:block;margin-top:2px}
+.wt{text-align:center;font-weight:700;color:var(--gold)}
+.wt-hi{color:var(--red);font-size:16px}
+
+/* PIPELINE */
+.pipeline{margin:14px 0 20px}
+.pipe-item{display:flex;gap:14px;align-items:flex-start;position:relative}
+.pipe-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;width:2px;height:calc(100% - 10px);background:var(--border)}
+.pipe-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;position:relative;z-index:1}
+.pipe-body{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.pipe-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.pipe-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.pd-blue{background:var(--blue-dark);color:#fff}
+.pd-green{background:#0d3319;color:var(--green)}
+.pd-amber{background:#3d2800;color:var(--amber)}
+.pd-purple{background:#1a0d3d;color:var(--purple)}
+.pd-teal{background:#0a2828;color:var(--teal)}
+
+/* ZONE DIAGRAM */
+.zone-diagram{display:flex;align-items:stretch;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin:14px 0 20px;font-size:12px}
+.zone{flex:1;padding:14px 12px;text-align:center}
+.zone-title{font-weight:700;margin-bottom:6px;font-size:13px}
+.zone-minerals{color:var(--muted);line-height:1.8;font-size:11px}
+.zone-au{background:#1f0808;border-right:1px solid var(--border)}
+.zone-au .zone-title{color:var(--red)}
+.zone-filic{background:#1f1200;border-right:1px solid var(--border)}
+.zone-filic .zone-title{color:var(--amber)}
+.zone-prop{background:var(--green-bg)}
+.zone-prop .zone-title{color:var(--green)}
+.zone-arrow{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px;padding:0 4px;background:var(--bg2)}
+
+/* WEIGHT BARS */
+.wbar-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin:14px 0 20px}
+.wbar-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+.wbar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.wbar-label{font-size:12px;color:#b0bec5;flex:0 0 190px}
+.wbar-track{flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden}
+.wbar-fill{height:8px;border-radius:4px;transition:width .5s ease}
+.wbar-pct{font-size:12px;font-weight:700;color:var(--gold);width:36px;text-align:right}
+.wbar-divider{height:1px;background:var(--border);margin:14px 0}
+.total-row{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--text);margin-top:8px}
+
+/* EXPORT GRID */
+.export-list{display:flex;flex-direction:column;gap:8px;margin:14px 0 20px}
+.exp-item{display:flex;gap:14px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.exp-num{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+.exp-body{}
+.exp-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.exp-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.exp-meta{font-size:11px;display:inline-block;margin-top:4px;padding:2px 7px;border-radius:4px;background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+
+/* WORKFLOW */
+.workflow{display:flex;align-items:flex-start;gap:0;margin:14px 0 20px;overflow-x:auto;padding-bottom:4px}
+.wf-step{flex:0 0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;width:140px;text-align:center;transition:border-color .15s}
+.wf-step:hover{border-color:#484f58}
+.wf-icon{font-size:22px;margin-bottom:6px}
+.wf-num{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.wf-label{font-size:12px;color:#b0bec5;line-height:1.4}
+.wf-arrow{display:flex;align-items:center;color:var(--muted);font-size:20px;padding:0 4px;flex-shrink:0;margin-top:20px}
+
+/* BIBLIOGRAPHY */
+.biblio-group-title{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 10px}
+.biblio-list{margin:0 0 6px;display:flex;flex-direction:column;gap:11px}
+.biblio-item{font-size:12.5px;color:#b0bec5;line-height:1.65;padding-left:24px;position:relative}
+.biblio-num{position:absolute;left:0;top:0;color:var(--gold);font-weight:700;font-size:12px}
+.biblio-item a{color:#79b8ff;text-decoration:none}
+.biblio-item a:hover{text-decoration:underline}
+.biblio-item .biblio-note{display:block;color:var(--muted);font-size:11px;margin-top:2px;font-style:italic}
+
+/* NAV FOOTER */
+.lesson-nav{display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+.nav-prev,.nav-next{padding:9px 18px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:background .12s,color .12s;border:1px solid var(--border);background:var(--bg2);color:var(--text);display:flex;align-items:center;gap:6px}
+.nav-prev:hover,.nav-next:hover{background:var(--bg3)}
+.nav-prev:disabled,.nav-next:disabled{opacity:.35;cursor:default}
+.nav-next{background:var(--blue-dark);border-color:var(--blue);color:#fff}
+.nav-next:hover:not(:disabled){background:#0a52cc}
+.nav-center{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <span>🛰</span> GEE Multisensor v1.0
+  </div>
+  <div class="topbar-tabs" id="tabs">
+    <button class="tab-btn active" onclick="go(0)">1 · Fundamentos</button>
+    <button class="tab-btn" onclick="go(1)">2 · Tu ROI</button>
+    <button class="tab-btn" onclick="go(2)">3 · Sentinel-2</button>
+    <button class="tab-btn" onclick="go(3)">4 · ASTER</button>
+    <button class="tab-btn" onclick="go(4)">5 · Landsat</button>
+    <button class="tab-btn" onclick="go(5)">6 · Fusión + Campo</button>
+    <button class="tab-btn" onclick="go(6)">7 · Anexo: Caso Au</button>
+  </div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar-wrap" id="prog">
+  <div class="prog-item" onclick="go(0)">
+    <div class="prog-dot active" id="pd0">1</div>
+    <div class="prog-label active" id="pl0">Fundamentos</div>
+  </div>
+  <div class="prog-line" id="pl-0"></div>
+  <div class="prog-item" onclick="go(1)">
+    <div class="prog-dot" id="pd1">2</div>
+    <div class="prog-label" id="pl1">Tu ROI</div>
+  </div>
+  <div class="prog-line" id="pl-1"></div>
+  <div class="prog-item" onclick="go(2)">
+    <div class="prog-dot" id="pd2">3</div>
+    <div class="prog-label" id="pl2">Sentinel-2</div>
+  </div>
+  <div class="prog-line" id="pl-2"></div>
+  <div class="prog-item" onclick="go(3)">
+    <div class="prog-dot" id="pd3">4</div>
+    <div class="prog-label" id="pl3">ASTER</div>
+  </div>
+  <div class="prog-line" id="pl-3"></div>
+  <div class="prog-item" onclick="go(4)">
+    <div class="prog-dot" id="pd4">5</div>
+    <div class="prog-label" id="pl4">Landsat</div>
+  </div>
+  <div class="prog-line" id="pl-4"></div>
+  <div class="prog-item" onclick="go(5)">
+    <div class="prog-dot" id="pd5">6</div>
+    <div class="prog-label" id="pl5">Fusión + Campo</div>
+  </div>
+  <div class="prog-line" id="pl-5"></div>
+  <div class="prog-item" onclick="go(6)">
+    <div class="prog-dot" id="pd6">7</div>
+    <div class="prog-label" id="pl6">Anexo: Caso Au</div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-group">
+    <div class="sb-group-title">Módulos</div>
+    <button class="sb-link sb-nav active" id="sb0" onclick="go(0)">1. Fundamentos multisensor</button>
+    <button class="sb-link sb-nav" id="sb1" onclick="go(1)">2. Tu ROI (cualquier zona)</button>
+    <button class="sb-link sb-nav" id="sb2" onclick="go(2)">3. Sentinel-2 — óxidos/arcillas</button>
+    <button class="sb-link sb-nav" id="sb3" onclick="go(3)">4. ASTER — SWIR detallado</button>
+    <button class="sb-link sb-nav" id="sb4" onclick="go(4)">5. Landsat — histórico/regional</button>
+    <button class="sb-link sb-nav" id="sb5" onclick="go(5)">6. Fusión + targets + export</button>
+    <button class="sb-link sb-nav" id="sb6" onclick="go(6)">7. Anexo — Caso Au (ASTER+DEM+ML)</button>
+  </div>
+  <div class="sb-group" style="margin-top:8px">
+    <div class="sb-group-title">Referencias clave</div>
+    <div class="sb-link" style="cursor:default;font-size:12px">Sabins 1999</div>
+    <div class="sb-link" style="cursor:default;font-size:12px">Ninomiya 2002 / 2003</div>
+    <div class="sb-link" style="cursor:default;font-size:12px">Rowan &amp; Mars 2003</div>
+    <div class="sb-link" style="cursor:default;font-size:12px">Rowan et al. 2003 (Cuprite)</div>
+    <div class="sb-link" style="cursor:default;font-size:12px">Corbett &amp; Leach 1998</div>
+    <div class="sb-link" style="cursor:default;font-size:12px">Crósta &amp; Moore 1989</div>
+    <div class="sb-link" style="cursor:default;font-size:12px">van der Werff &amp; van der Meer 2016</div>
+    <button class="sb-link" style="margin-top:2px;color:var(--blue)" onclick="go(5);document.getElementById('biblio').scrollIntoView({behavior:'smooth'})">Ver bibliografía completa ↓</button>
+  </div>
+</nav>
+
+<!-- CONTENT AREA -->
+<main class="content">
+
+<!-- ══════════════════════════ MÓDULO 1 ══════════════════════════ -->
+<div class="lesson active" id="L0">
+  <div class="lesson-tag">Módulo 1 de 6 — Fundamentos</div>
+  <h1 class="lesson-h1">Por qué combinar ASTER + Sentinel-2 + Landsat</h1>
+  <p class="lesson-intro">Ningún sensor por sí solo resuelve el mapeo de alteración hidrotermal. Cada uno aporta una pieza distinta del rompecabezas: resolución espacial, resolución espectral SWIR, o profundidad histórica. Este curso te enseña a usar los tres de forma complementaria — y sobre <strong>la zona que tú elijas</strong>, no sobre una coordenada fija.</p>
+
+  <div class="callout call-info">
+    <div class="callout-icon">📡</div>
+    <div class="callout-body">
+      <div class="callout-title">La física detrás del cociente de bandas</div>
+      Los óxidos de hierro (hematita, goethita, jarosita) reflejan fuertemente en rojo/NIR y absorben en azul, con una caída característica cerca de 850–900 nm. Los minerales de arcilla y sulfatos (caolinita, illita, sericita, alunita) tienen una firma de absorción del enlace Al–OH cerca de 2160–2220 nm, dentro del SWIR. Un índice de cociente Banda-A/Banda-B amplifica ese contraste: si el mineral objetivo absorbe en B pero no en A, el cociente sube por encima de 1.0.
+    </div>
+  </div>
+
+  <div class="sh">Tabla comparativa — fortalezas y límites de cada sensor</div>
+  <table class="mtable">
+    <thead>
+      <tr><th>Sensor</th><th>Resolución</th><th>Bandas clave (óxidos/arcillas)</th><th>Revisita</th><th>Cobertura temporal</th><th>Mejor uso</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Sentinel-2</td>
+        <td style="color:#8b949e;font-size:12px">10–20 m</td>
+        <td style="color:#8b949e;font-size:12px">B2, B4, B8, B11, B12</td>
+        <td style="color:#8b949e;font-size:12px">~5 días</td>
+        <td style="color:#8b949e;font-size:12px">2015 — presente</td>
+        <td style="color:#8b949e;font-size:12px">Barrido rápido, alta frecuencia, detalle local</td>
+      </tr>
+      <tr>
+        <td>ASTER</td>
+        <td style="color:#8b949e;font-size:12px">15–30–90 m</td>
+        <td style="color:#8b949e;font-size:12px">VNIR B1–B3, SWIR B4–B9, TIR B10–B14</td>
+        <td style="color:#8b949e;font-size:12px">Programada (no sistemática)</td>
+        <td style="color:#8b949e;font-size:12px">2000 — presente (VNIR) · SWIR solo hasta 2008</td>
+        <td style="color:#8b949e;font-size:12px">Mineralogía fina: diferencia alunita, caolinita, sericita</td>
+      </tr>
+      <tr>
+        <td>Landsat 5/7</td>
+        <td style="color:#8b949e;font-size:12px">30 m</td>
+        <td style="color:#8b949e;font-size:12px">TM/ETM+ B1,B3,B4,B5,B7</td>
+        <td style="color:#8b949e;font-size:12px">16 días</td>
+        <td style="color:#8b949e;font-size:12px">1984 — 2012 / 2022</td>
+        <td style="color:#8b949e;font-size:12px">Contexto histórico, cambios en décadas pasadas</td>
+      </tr>
+      <tr>
+        <td>Landsat 8/9</td>
+        <td style="color:#8b949e;font-size:12px">30 m</td>
+        <td style="color:#8b949e;font-size:12px">OLI SR_B2,SR_B4,SR_B5,SR_B6,SR_B7 + TIR</td>
+        <td style="color:#8b949e;font-size:12px">16 días (8 combinados)</td>
+        <td style="color:#8b949e;font-size:12px">2013 — presente</td>
+        <td style="color:#8b949e;font-size:12px">Cobertura regional grande, sin fraccionar en tiles</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sh">Bandas equivalentes entre sensores</div>
+  <table class="mtable">
+    <thead>
+      <tr><th>Región espectral</th><th>Sentinel-2</th><th>Landsat 8/9 OLI</th><th>Landsat 5/7 TM/ETM+</th><th>ASTER</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Azul</td><td style="color:#8b949e;font-size:12px">B2 (0.49 μm)</td><td style="color:#8b949e;font-size:12px">SR_B2 (0.48 μm)</td><td style="color:#8b949e;font-size:12px">B1 (0.48 μm)</td><td style="color:#8b949e;font-size:12px">B1 (0.56 μm)*</td></tr>
+      <tr><td>Rojo</td><td style="color:#8b949e;font-size:12px">B4 (0.66 μm)</td><td style="color:#8b949e;font-size:12px">SR_B4 (0.65 μm)</td><td style="color:#8b949e;font-size:12px">B3 (0.66 μm)</td><td style="color:#8b949e;font-size:12px">B2 (0.66 μm)</td></tr>
+      <tr><td>NIR</td><td style="color:#8b949e;font-size:12px">B8 (0.84 μm)</td><td style="color:#8b949e;font-size:12px">SR_B5 (0.86 μm)</td><td style="color:#8b949e;font-size:12px">B4 (0.83 μm)</td><td style="color:#8b949e;font-size:12px">B3N (0.81 μm)</td></tr>
+      <tr><td>SWIR 1</td><td style="color:#8b949e;font-size:12px">B11 (1.61 μm)</td><td style="color:#8b949e;font-size:12px">SR_B6 (1.61 μm)</td><td style="color:#8b949e;font-size:12px">B5 (1.65 μm)</td><td style="color:#8b949e;font-size:12px">B4 (1.65 μm)</td></tr>
+      <tr><td>SWIR 2</td><td style="color:#8b949e;font-size:12px">B12 (2.19 μm)</td><td style="color:#8b949e;font-size:12px">SR_B7 (2.20 μm)</td><td style="color:#8b949e;font-size:12px">B7 (2.22 μm)</td><td style="color:#8b949e;font-size:12px">B5–B9 (2.15–2.43 μm, 5 bandas)</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:11px;color:var(--muted);margin-top:-10px">* ASTER B1 es en realidad verde/rojo (0.52–0.60 μm); se ubica aquí solo como referencia de posición relativa dentro del VNIR.</p>
+
+  <div class="sh">Zonación hidrotermal típica — lo que cada índice te va a mostrar</div>
+  <div class="zone-diagram">
+    <div class="zone zone-au">
+      <div class="zone-title">🔴 Núcleo silíceo / oxidado</div>
+      <div class="zone-minerals">Cuarzo · alunita<br>jarosita · hematita<br>gossans</div>
+    </div>
+    <div class="zone-arrow">→</div>
+    <div class="zone zone-filic">
+      <div class="zone-title">🟠 Halo argílico</div>
+      <div class="zone-minerals">Caolinita · sericita<br>illita · esmectita<br>arcillas Al–OH</div>
+    </div>
+    <div class="zone-arrow">→</div>
+    <div class="zone zone-prop">
+      <div class="zone-title">🟢 Halo propilítico distal</div>
+      <div class="zone-minerals">Clorita · epidota<br>calcita · carbonatos</div>
+    </div>
+  </div>
+
+  <div class="callout call-ok">
+    <div class="callout-icon">🧭</div>
+    <div class="callout-body">
+      <div class="callout-title">La estrategia de este curso</div>
+      Módulo 2: defines tu ROI de forma paramétrica — cualquier punto, rectángulo, polígono o asset del mundo. Módulo 3: Sentinel-2 hace un barrido rápido de óxidos y arcillas en general. Módulo 4: ASTER, cuando cubre tu zona, discrimina qué arcilla específica hay. Módulo 5: Landsat aporta profundidad histórica y cubre áreas grandes sin fraccionar. Módulo 6: fusionas todo en un mapa de prioridades para campo. <strong>No hay coordenadas fijas en ningún módulo</strong> — todo cuelga de un único objeto <code>PARAMS</code> que defines una vez.
+    </div>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="nav-prev" disabled>← Anterior</button>
+    <span class="nav-center">Módulo 1 de 6</span>
+    <button class="nav-next" onclick="go(1)">Tu ROI →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════ MÓDULO 2 ══════════════════════════ -->
+<div class="lesson" id="L1">
+  <div class="lesson-tag">Módulo 2 de 6 — Configuración espacial</div>
+  <h1 class="lesson-h1">Tu Área de Interés — para cualquier zona del mundo</h1>
+  <p class="lesson-intro">Este es el módulo que hace que el curso funcione en cualquier lugar. En vez de un punto fijo grabado en el código, el ROI se construye a partir de un parámetro que tú cambias — el resto del script no se toca.</p>
+
+  <div class="sh">Cuatro formas de definir tu ROI</div>
+  <div class="grid g2">
+    <div class="card blue">
+      <div class="card-icon">📍</div>
+      <div class="card-title">Punto + buffer</div>
+      <div class="card-body">Da un [lon, lat] y un radio en metros. Ideal cuando ya tienes una coordenada de interés (una mina, un prospecto, una muestra con anomalía) y quieres una ventana de trabajo alrededor.</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">▭</div>
+      <div class="card-title">Rectángulo (bounding box)</div>
+      <div class="card-body">Da [lonMin, latMin, lonMax, latMax]. Rápido para exploración regional cuando ya conoces los límites aproximados de tu concesión o cuenca de interés.</div>
+    </div>
+    <div class="card amber">
+      <div class="card-icon">✏</div>
+      <div class="card-title">Polígono dibujado a mano</div>
+      <div class="card-body">Usa las herramientas de dibujo del panel de Geometry Imports del Code Editor de GEE para trazar un contorno irregular (una cuenca, un distrito minero). El polígono queda disponible como variable <code>geometry</code>.</div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">🗂</div>
+      <div class="card-title">Asset importado</div>
+      <div class="card-body">Sube tu propio shapefile o KML a GEE Assets (Assets → New → Shape files) y cárgalo como <code>FeatureCollection</code>. Es la opción más robusta si ya trabajas con polígonos en QGIS/ArcGIS.</div>
+    </div>
+  </div>
+
+  <div class="sh">El objeto PARAMS — un solo lugar para cambiar de zona</div>
+  <p>Declara todo lo configurable en un único objeto al inicio del script. Cambiar de Potosí a cualquier otro distrito minero del planeta significa editar estas líneas — nada más.</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Configuración</span><span class="code-note">PARAMS + selección de ROI</span></div>
+    <pre><span class="kw">var</span> <span class="var">PARAMS</span> <span class="op">=</span> <span class="punc">{</span>
+  <span class="cm">// ── ROI: elige 'point' | 'rectangle' | 'polygon' | 'asset' ──</span>
+  <span class="prop">roiType</span>     <span class="op">:</span> <span class="str">'point'</span><span class="punc">,</span>
+
+  <span class="cm">// se usa solo si roiType = 'point' (ejemplo: reemplaza por tu zona)</span>
+  <span class="prop">point</span>       <span class="op">:</span> <span class="punc">[</span><span class="num">-65.75</span><span class="punc">,</span> <span class="num">-19.58</span><span class="punc">],</span>
+  <span class="prop">bufferM</span>     <span class="op">:</span> <span class="num">5000</span><span class="punc">,</span>
+
+  <span class="cm">// se usa solo si roiType = 'rectangle'</span>
+  <span class="prop">rectangle</span>   <span class="op">:</span> <span class="punc">[</span><span class="num">-66.00</span><span class="punc">,</span> <span class="num">-19.80</span><span class="punc">,</span> <span class="num">-65.50</span><span class="punc">,</span> <span class="num">-19.40</span><span class="punc">],</span>
+
+  <span class="cm">// se usa solo si roiType = 'asset' (tu FeatureCollection en Assets)</span>
+  <span class="prop">assetId</span>     <span class="op">:</span> <span class="str">'users/tu_usuario/mi_area_interes'</span><span class="punc">,</span>
+
+  <span class="cm">// ── ventana temporal y calidad de escena ──</span>
+  <span class="prop">dateStart</span>   <span class="op">:</span> <span class="str">'2023-01-01'</span><span class="punc">,</span>
+  <span class="prop">dateEnd</span>     <span class="op">:</span> <span class="str">'2023-12-31'</span><span class="punc">,</span>
+  <span class="prop">maxCloud</span>    <span class="op">:</span> <span class="num">20</span>
+<span class="punc">};</span>
+
+<span class="cm">// ── construcción del ROI a partir del PARAMS ──</span>
+<span class="kw">var</span> <span class="var">roi</span><span class="punc">;</span>
+<span class="kw">if</span> <span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">roiType</span> <span class="op">===</span> <span class="str">'point'</span><span class="punc">) {</span>
+  <span class="var">roi</span> <span class="op">=</span> <span class="fn">ee.Geometry.Point</span><span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">point</span><span class="punc">).</span><span class="fn">buffer</span><span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">bufferM</span><span class="punc">).</span><span class="fn">bounds</span><span class="punc">();</span>
+<span class="punc">} </span><span class="kw">else if</span> <span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">roiType</span> <span class="op">===</span> <span class="str">'rectangle'</span><span class="punc">) {</span>
+  <span class="var">roi</span> <span class="op">=</span> <span class="fn">ee.Geometry.Rectangle</span><span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">rectangle</span><span class="punc">);</span>
+<span class="punc">} </span><span class="kw">else if</span> <span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">roiType</span> <span class="op">===</span> <span class="str">'polygon'</span><span class="punc">) {</span>
+  <span class="var">roi</span> <span class="op">=</span> <span class="var">geometry</span><span class="punc">;</span> <span class="cm">// dibujado con las herramientas del Code Editor</span>
+<span class="punc">} </span><span class="kw">else</span> <span class="punc">{</span>
+  <span class="var">roi</span> <span class="op">=</span> <span class="fn">ee.FeatureCollection</span><span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">assetId</span><span class="punc">).</span><span class="fn">geometry</span><span class="punc">();</span>
+<span class="punc">}</span>
+
+<span class="fn">Map.centerObject</span><span class="punc">(</span><span class="var">roi</span><span class="punc">,</span> <span class="num">10</span><span class="punc">);</span>
+<span class="fn">Map.addLayer</span><span class="punc">(</span><span class="var">roi</span><span class="punc">,</span> <span class="punc">{</span><span class="prop">color</span><span class="op">:</span> <span class="str">'yellow'</span><span class="punc">},</span> <span class="str">'ROI'</span><span class="punc">);</span>
+<span class="fn">print</span><span class="punc">(</span><span class="str">'Área del ROI (km²):'</span><span class="punc">,</span> <span class="var">roi</span><span class="punc">.</span><span class="fn">area</span><span class="punc">().</span><span class="fn">divide</span><span class="punc">(</span><span class="num">1e6</span><span class="punc">));</span>
+</pre>
+  </div>
+
+  <p style="font-size:12px;color:var(--muted);margin-top:-8px">Todos los módulos siguientes reutilizan esta misma variable <code>roi</code> y este mismo objeto <code>PARAMS</code> — no vuelvas a escribir coordenadas en ningún otro bloque de código.</p>
+
+  <div class="callout call-warn">
+    <div class="callout-icon">⚠</div>
+    <div class="callout-body">
+      <div class="callout-title">Cuidado con el tamaño del ROI</div>
+      Cuanto mayor el área, mayor el tiempo de cómputo y el riesgo de exceder los límites de memoria interactiva de GEE. Para análisis exploratorio en el mapa, manténte por debajo de ~5000 km². Para áreas mayores, usa <code>bestEffort: true</code> y <code>tileScale</code> en los <code>reduceRegion</code>, y exporta con <code>Export.image.toDrive</code> (que sí procesa en el backend sin ese límite) en vez de intentar visualizar todo interactivamente.
+    </div>
+  </div>
+
+  <div class="callout call-ok">
+    <div class="callout-icon">💾</div>
+    <div class="callout-body">
+      <div class="callout-title">Reutiliza tu ROI entre sesiones</div>
+      La primera vez que definas un polígono a mano, expórtalo como Asset propio (<code>Export.table.toAsset</code>). Así, en tu próxima sesión solo cambias <code>PARAMS.roiType</code> a <code>'asset'</code> y apuntas al Asset guardado — sin redibujar nada.
+    </div>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="nav-prev" onclick="go(0)">← Fundamentos</button>
+    <span class="nav-center">Módulo 2 de 6</span>
+    <button class="nav-next" onclick="go(2)">Sentinel-2 →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════ MÓDULO 3 ══════════════════════════ -->
+<div class="lesson" id="L2">
+  <div class="lesson-tag">Módulo 3 de 6 — Barrido rápido</div>
+  <h1 class="lesson-h1">Sentinel-2 — óxidos y arcillas en alta frecuencia</h1>
+  <p class="lesson-intro">10–20 m de resolución y revisita cada ~5 días hacen de Sentinel-2 el mejor punto de partida para cualquier zona: cobertura garantizada desde 2015 y actualización constante, sin depender de programación de escenas.</p>
+
+  <div class="sh">Pipeline del módulo</div>
+  <div class="pipeline">
+    <div class="pipe-item">
+      <div class="pipe-dot pd-blue">1</div>
+      <div class="pipe-body">
+        <div class="pipe-title">Cargar colección y filtrar</div>
+        <div class="pipe-desc">COPERNICUS/S2_SR_HARMONIZED, recortada por <code>roi</code>, por la ventana de fechas de <code>PARAMS</code> y por porcentaje de nubes.</div>
+      </div>
+    </div>
+    <div class="pipe-item">
+      <div class="pipe-dot pd-green">2</div>
+      <div class="pipe-body">
+        <div class="pipe-title">Compuesto mediana</div>
+        <div class="pipe-desc">La mediana temporal elimina nubes residuales y sombras que sobreviven al filtro de metadatos.</div>
+      </div>
+    </div>
+    <div class="pipe-item">
+      <div class="pipe-dot pd-amber">3</div>
+      <div class="pipe-body">
+        <div class="pipe-title">Máscara de vegetación (NDVI)</div>
+        <div class="pipe-desc">La vegetación densa oculta la firma espectral de la roca. Se excluyen píxeles con NDVI alto antes de interpretar los índices minerales.</div>
+      </div>
+    </div>
+    <div class="pipe-item">
+      <div class="pipe-dot pd-purple">4</div>
+      <div class="pipe-body">
+        <div class="pipe-title">Calcular índices de cociente</div>
+        <div class="pipe-desc">Óxidos de Fe, minerales ferrosos y arcillas Al–OH (sin discriminar cuál arcilla — eso lo resuelve ASTER en el Módulo 4).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Sentinel-2</span><span class="code-note">Carga y compuesto</span></div>
+    <pre><span class="kw">var</span> <span class="var">s2</span> <span class="op">=</span> <span class="fn">ee.ImageCollection</span><span class="punc">(</span><span class="str">'COPERNICUS/S2_SR_HARMONIZED'</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">filterBounds</span><span class="punc">(</span><span class="var">roi</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">filterDate</span><span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">dateStart</span><span class="punc">,</span> <span class="var">PARAMS</span><span class="punc">.</span><span class="prop">dateEnd</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">filter</span><span class="punc">(</span><span class="fn">ee.Filter.lt</span><span class="punc">(</span><span class="str">'CLOUDY_PIXEL_PERCENTAGE'</span><span class="punc">,</span> <span class="var">PARAMS</span><span class="punc">.</span><span class="prop">maxCloud</span><span class="punc">))</span>
+  <span class="punc">.</span><span class="fn">median</span><span class="punc">()</span>
+  <span class="punc">.</span><span class="fn">clip</span><span class="punc">(</span><span class="var">roi</span><span class="punc">);</span>
+
+<span class="kw">var</span> <span class="var">ndvi</span> <span class="op">=</span> <span class="var">s2</span><span class="punc">.</span><span class="fn">normalizedDifference</span><span class="punc">([</span><span class="str">'B8'</span><span class="punc">,</span> <span class="str">'B4'</span><span class="punc">]).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'NDVI'</span><span class="punc">);</span>
+<span class="kw">var</span> <span class="var">rockMask</span> <span class="op">=</span> <span class="var">ndvi</span><span class="punc">.</span><span class="fn">lt</span><span class="punc">(</span><span class="num">0.25</span><span class="punc">);</span> <span class="cm">// excluye vegetación densa</span>
+</pre>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Sentinel-2</span><span class="code-note">Índices de óxidos y arcillas</span></div>
+    <pre><span class="kw">var</span> <span class="var">feOxideS2</span>  <span class="op">=</span> <span class="var">s2</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B4'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">s2</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B2'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Fe_oxido'</span><span class="punc">).</span><span class="fn">updateMask</span><span class="punc">(</span><span class="var">rockMask</span><span class="punc">);</span>
+<span class="kw">var</span> <span class="var">ferrosoS2</span>  <span class="op">=</span> <span class="var">s2</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B11'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">s2</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B8'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Ferroso'</span><span class="punc">).</span><span class="fn">updateMask</span><span class="punc">(</span><span class="var">rockMask</span><span class="punc">);</span>
+<span class="kw">var</span> <span class="var">arcillaS2</span>  <span class="op">=</span> <span class="var">s2</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B11'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">s2</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B12'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Arcilla_OH'</span><span class="punc">).</span><span class="fn">updateMask</span><span class="punc">(</span><span class="var">rockMask</span><span class="punc">);</span>
+
+<span class="fn">Map.addLayer</span><span class="punc">(</span><span class="var">arcillaS2</span><span class="punc">,</span> <span class="punc">{</span><span class="prop">min</span><span class="op">:</span><span class="num">0.9</span><span class="punc">,</span><span class="prop">max</span><span class="op">:</span><span class="num">1.4</span><span class="punc">,</span><span class="prop">palette</span><span class="op">:</span><span class="punc">[</span><span class="str">'000000'</span><span class="punc">,</span><span class="str">'ffff00'</span><span class="punc">,</span><span class="str">'ff0000'</span><span class="punc">]},</span> <span class="str">'Arcillas (Sentinel-2)'</span><span class="punc">);</span>
+</pre>
+  </div>
+
+  <div class="sh">Tabla de índices — Sentinel-2</div>
+  <table class="mtable">
+    <thead><tr><th>Índice</th><th>Fórmula</th><th>Qué detecta</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Óxidos de Fe<br><span class="ref-tag">Sabins 1999</span></td>
+        <td><span class="formula">B4 / B2</span></td>
+        <td style="color:#8b949e;font-size:12px">Hematita, goethita, jarosita — gossans y halos de oxidación superficial.</td>
+      </tr>
+      <tr>
+        <td>Minerales ferrosos</td>
+        <td><span class="formula">B11 / B8</span></td>
+        <td style="color:#8b949e;font-size:12px">Fe²⁺ en silicatos máficos (biotita, clorita, anfíboles alterados).</td>
+      </tr>
+      <tr>
+        <td>Arcillas Al–OH (general)<br><span class="ref-tag">Crósta &amp; Moore 1989, adaptado</span></td>
+        <td><span class="formula">B11 / B12</span></td>
+        <td style="color:#8b949e;font-size:12px">Presencia conjunta de caolinita/illita/sericita/alunita — sin discriminar cuál.</td>
+      </tr>
+      <tr>
+        <td>NDVI (máscara)</td>
+        <td><span class="formula">(B8−B4)/(B8+B4)</span></td>
+        <td style="color:#8b949e;font-size:12px">Excluye vegetación que enmascara la señal mineral de la roca expuesta.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout call-warn">
+    <div class="callout-icon">🔍</div>
+    <div class="callout-body">
+      <div class="callout-title">El límite de Sentinel-2: solo dos bandas SWIR</div>
+      B11 y B12 son anchas y solo dos, así que el índice de arcillas es un indicador general — te dice "aquí hay arcilla" pero no "aquí hay caolinita y no sericita". Si necesitas esa discriminación fina, es el trabajo del Módulo 4 (ASTER), que tiene 5 bandas SWIR angostas.
+    </div>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="nav-prev" onclick="go(1)">← Tu ROI</button>
+    <span class="nav-center">Módulo 3 de 6</span>
+    <button class="nav-next" onclick="go(3)">ASTER →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════ MÓDULO 4 ══════════════════════════ -->
+<div class="lesson" id="L3">
+  <div class="lesson-tag">Módulo 4 de 6 — Mineralogía fina</div>
+  <h1 class="lesson-h1">ASTER — discriminación mineral detallada vía SWIR</h1>
+  <p class="lesson-intro">Donde Sentinel-2 dice "hay arcilla", ASTER dice cuál. Sus 5 bandas SWIR angostas (B4–B9) permiten separar alunita, caolinita y sericita — minerales que marcan zonas distintas del sistema hidrotermal.</p>
+
+  <div class="callout call-warn">
+    <div class="callout-icon">⚠</div>
+    <div class="callout-body">
+      <div class="callout-title">¿Por qué filtrar hasta abril de 2008?</div>
+      El detector SWIR de ASTER (bandas B4–B9) falló en abril de 2008 por un mal funcionamiento del sistema de enfriamiento criogénico. Sin estas bandas no hay alunita, sericita ni caolinita distinguibles. Las bandas VNIR (B1–B3) siguen funcionando hoy, así que úsalas para óxidos de Fe o para true-color; para los índices SWIR de este módulo, limita la fecha de fin a <code>'2008-04-28'</code>.
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — ASTER</span><span class="code-note">Carga y compuesto (ventana SWIR válida)</span></div>
+    <pre><span class="kw">var</span> <span class="var">aster</span> <span class="op">=</span> <span class="fn">ee.ImageCollection</span><span class="punc">(</span><span class="str">'ASTER/AST_L1T_003'</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">filterBounds</span><span class="punc">(</span><span class="var">roi</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">filterDate</span><span class="punc">(</span><span class="str">'2000-01-01'</span><span class="punc">,</span> <span class="str">'2008-04-28'</span><span class="punc">)</span> <span class="cm">// límite real del SWIR</span>
+  <span class="punc">.</span><span class="fn">filter</span><span class="punc">(</span><span class="fn">ee.Filter.lt</span><span class="punc">(</span><span class="str">'CLOUDCOVER'</span><span class="punc">,</span> <span class="var">PARAMS</span><span class="punc">.</span><span class="prop">maxCloud</span><span class="punc">))</span>
+  <span class="punc">.</span><span class="fn">median</span><span class="punc">()</span>
+  <span class="punc">.</span><span class="fn">clip</span><span class="punc">(</span><span class="var">roi</span><span class="punc">);</span>
+
+<span class="fn">print</span><span class="punc">(</span><span class="str">'Escenas ASTER SWIR encontradas en el ROI:'</span><span class="punc">,</span>
+  <span class="fn">ee.ImageCollection</span><span class="punc">(</span><span class="str">'ASTER/AST_L1T_003'</span><span class="punc">).</span><span class="fn">filterBounds</span><span class="punc">(</span><span class="var">roi</span><span class="punc">).</span><span class="fn">filterDate</span><span class="punc">(</span><span class="str">'2000-01-01'</span><span class="punc">,</span><span class="str">'2008-04-28'</span><span class="punc">).</span><span class="fn">size</span><span class="punc">());</span>
+<span class="cm">// ← si esto es 0, tu zona no tiene cobertura ASTER SWIR: ver el aviso del Módulo 6</span>
+</pre>
+  </div>
+
+  <div class="sh">Tabla completa de índices mineralógicos</div>
+  <table class="mtable">
+    <thead><tr><th>Mineral objetivo</th><th>Fórmula</th><th>Física del índice</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Alunita (AAS)<br><span class="ref-tag">Rowan et al. 2003 — Cuprite</span></td>
+        <td><span class="formula">B7 / B5</span></td>
+        <td style="color:#8b949e;font-size:12px">B5 (2.17 μm) absorbe por el enlace Al–OH de alunita; B7 (2.26 μm) refleja. Diagnóstico de alteración argílica avanzada.</td>
+      </tr>
+      <tr>
+        <td>Caolinita<br><span class="ref-tag">Ninomiya 2002</span></td>
+        <td><span class="formula">B6 / B5</span></td>
+        <td style="color:#8b949e;font-size:12px">Doble absorción Al–OH en 2.17 μm (B5) y 2.21 μm (B6); B5 absorbe más fuerte, cociente &gt; 1 marca caolinita.</td>
+      </tr>
+      <tr>
+        <td>Sericita / illita<br><span class="ref-tag">Ninomiya 2002</span></td>
+        <td><span class="formula">B5 / B6</span></td>
+        <td style="color:#8b949e;font-size:12px">Absorción de sericita en ~2.20 μm (B5); B6 (~2.21 μm) es zona de reflectancia relativa.</td>
+      </tr>
+      <tr>
+        <td>Grupos OH (halo distal)<br><span class="ref-tag">Rowan &amp; Mars 2003</span></td>
+        <td><span class="formula">(B6+B9)/(B8×2)</span></td>
+        <td style="color:#8b949e;font-size:12px">B6 y B9 son zonas de reflectancia; B8 (~2.33 μm) absorbe en carbonatos e illita.</td>
+      </tr>
+      <tr>
+        <td>Propilítica / clorita<br><span class="ref-tag">Corbett &amp; Leach 1998</span></td>
+        <td><span class="formula">B4 / B5</span></td>
+        <td style="color:#8b949e;font-size:12px">Clorita y epidota reflejan en B4 (1.65 μm) y absorben en B5 (2.17 μm) — indica la zona más distal del sistema.</td>
+      </tr>
+      <tr>
+        <td>Óxidos de Fe (VNIR)<br><span class="ref-tag">Sabins 1999</span></td>
+        <td><span class="formula">B2 / B1</span></td>
+        <td style="color:#8b949e;font-size:12px">Goethita y hematita absorben en azul-verde (B1) y reflejan en rojo (B2). Sigue funcionando después de 2008.</td>
+      </tr>
+      <tr>
+        <td>Sílice (TIR)<br><span class="ref-tag">Ninomiya 2003</span></td>
+        <td><span class="formula">(B13/B12)+(B13/B14)</span></td>
+        <td style="color:#8b949e;font-size:12px">Restrahlen feature del cuarzo: alta emisividad en B13 (~10.6 μm) relativa a B12 y B14. Resolución nativa 90 m.</td>
+      </tr>
+      <tr>
+        <td>Carbonatos (TIR)<br><span class="ref-tag">Ninomiya 2003</span></td>
+        <td><span class="formula">(B13+B11)/(B12×2)</span></td>
+        <td style="color:#8b949e;font-size:12px">Calcita y dolomita: alta emisividad en B11 y B13 respecto a B12. Marca halos distales de carbonato.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — ASTER</span><span class="code-note">Cálculo de los índices principales</span></div>
+    <pre><span class="kw">var</span> <span class="var">alunitaIndex</span>   <span class="op">=</span> <span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B07'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B05'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Alunita'</span><span class="punc">);</span>
+<span class="kw">var</span> <span class="var">caolinitaIndex</span> <span class="op">=</span> <span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B06'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B05'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Caolinita'</span><span class="punc">);</span>
+<span class="kw">var</span> <span class="var">sericitaIndex</span> <span class="op">=</span> <span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B05'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B06'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Sericita'</span><span class="punc">);</span>
+<span class="kw">var</span> <span class="var">oxidosVnirIndex</span> <span class="op">=</span> <span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B02'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B01'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Oxidos_VNIR'</span><span class="punc">);</span>
+<span class="kw">var</span> <span class="var">siliceTirIndex</span> <span class="op">=</span> <span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B13'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B12'</span><span class="punc">))</span>
+  <span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B13'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">aster</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'B14'</span><span class="punc">)))</span>
+  <span class="punc">.</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Silice_TIR'</span><span class="punc">);</span> <span class="cm">// requerido por la fusión del Módulo 6 — antes faltaba esta línea</span>
+</pre>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="nav-prev" onclick="go(2)">← Sentinel-2</button>
+    <span class="nav-center">Módulo 4 de 6</span>
+    <button class="nav-next" onclick="go(4)">Landsat →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════ MÓDULO 5 ══════════════════════════ -->
+<div class="lesson" id="L4">
+  <div class="lesson-tag">Módulo 5 de 6 — Contexto histórico y regional</div>
+  <h1 class="lesson-h1">Landsat — décadas de historia y grandes áreas sin fraccionar</h1>
+  <p class="lesson-intro">Cuando tu ROI cubre miles de km² o necesitas ver cómo cambió una zona en 20-30 años, Landsat es la herramienta correcta: la misma familia de sensores cubre el planeta de forma continua desde 1984.</p>
+
+  <table class="mtable">
+    <thead><tr><th>Misión</th><th>Periodo</th><th>Notas</th></tr></thead>
+    <tbody>
+      <tr><td>Landsat 5 (TM)</td><td style="color:#8b949e;font-size:12px">1984 – 2012</td><td style="color:#8b949e;font-size:12px">Numeración de bandas distinta a OLI: B1 azul, B3 rojo, B4 NIR, B5 SWIR1, B7 SWIR2.</td></tr>
+      <tr><td>Landsat 7 (ETM+)</td><td style="color:#8b949e;font-size:12px">1999 – 2022</td><td style="color:#8b949e;font-size:12px">Falla del SLC en 2003 introduce franjas sin datos ("gaps") en escenas posteriores.</td></tr>
+      <tr><td>Landsat 8 (OLI/TIRS)</td><td style="color:#8b949e;font-size:12px">2013 – presente</td><td style="color:#8b949e;font-size:12px">Numeración SR_B1…SR_B7 + banda térmica ST_B10.</td></tr>
+      <tr><td>Landsat 9 (OLI-2)</td><td style="color:#8b949e;font-size:12px">2021 – presente</td><td style="color:#8b949e;font-size:12px">Mismo esquema de bandas que Landsat 8; se pueden combinar en una sola colección.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Landsat 8/9</span><span class="code-note">Carga con corrección de factores de escala</span></div>
+    <pre><span class="kw">function</span> <span class="fn">aplicarFactoresEscala</span><span class="punc">(</span><span class="var">img</span><span class="punc">) {</span>
+  <span class="kw">var</span> <span class="var">optico</span> <span class="op">=</span> <span class="var">img</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'SR_B.'</span><span class="punc">).</span><span class="fn">multiply</span><span class="punc">(</span><span class="num">0.0000275</span><span class="punc">).</span><span class="fn">add</span><span class="punc">(</span><span class="num">-0.2</span><span class="punc">);</span>
+  <span class="kw">var</span> <span class="var">termico</span> <span class="op">=</span> <span class="var">img</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'ST_B10'</span><span class="punc">).</span><span class="fn">multiply</span><span class="punc">(</span><span class="num">0.00341802</span><span class="punc">).</span><span class="fn">add</span><span class="punc">(</span><span class="num">149.0</span><span class="punc">);</span>
+  <span class="kw">return</span> <span class="var">img</span><span class="punc">.</span><span class="fn">addBands</span><span class="punc">(</span><span class="var">optico</span><span class="punc">,</span> <span class="kw">null</span><span class="punc">,</span> <span class="kw">true</span><span class="punc">).</span><span class="fn">addBands</span><span class="punc">(</span><span class="var">termico</span><span class="punc">,</span> <span class="kw">null</span><span class="punc">,</span> <span class="kw">true</span><span class="punc">);</span>
+<span class="punc">}</span>
+
+<span class="kw">var</span> <span class="var">landsat</span> <span class="op">=</span> <span class="fn">ee.ImageCollection</span><span class="punc">(</span><span class="str">'LANDSAT/LC08/C02/T1_L2'</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">merge</span><span class="punc">(</span><span class="fn">ee.ImageCollection</span><span class="punc">(</span><span class="str">'LANDSAT/LC09/C02/T1_L2'</span><span class="punc">))</span>
+  <span class="punc">.</span><span class="fn">filterBounds</span><span class="punc">(</span><span class="var">roi</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">filterDate</span><span class="punc">(</span><span class="var">PARAMS</span><span class="punc">.</span><span class="prop">dateStart</span><span class="punc">,</span> <span class="var">PARAMS</span><span class="punc">.</span><span class="prop">dateEnd</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">filter</span><span class="punc">(</span><span class="fn">ee.Filter.lt</span><span class="punc">(</span><span class="str">'CLOUD_COVER'</span><span class="punc">,</span> <span class="var">PARAMS</span><span class="punc">.</span><span class="prop">maxCloud</span><span class="punc">))</span>
+  <span class="punc">.</span><span class="fn">map</span><span class="punc">(</span><span class="var">aplicarFactoresEscala</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">median</span><span class="punc">()</span>
+  <span class="punc">.</span><span class="fn">clip</span><span class="punc">(</span><span class="var">roi</span><span class="punc">);</span>
+
+<span class="kw">var</span> <span class="var">feOxideL8</span> <span class="op">=</span> <span class="var">landsat</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'SR_B4'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">landsat</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'SR_B2'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Fe_oxido_L8'</span><span class="punc">);</span>
+<span class="kw">var</span> <span class="var">arcillaL8</span>  <span class="op">=</span> <span class="var">landsat</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'SR_B6'</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="var">landsat</span><span class="punc">.</span><span class="fn">select</span><span class="punc">(</span><span class="str">'SR_B7'</span><span class="punc">)).</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'Arcilla_L8'</span><span class="punc">);</span>
+</pre>
+  </div>
+
+  <div class="callout call-info">
+    <div class="callout-icon">🕰</div>
+    <div class="callout-body">
+      <div class="callout-title">Si tu zona necesita historia previa a 2013</div>
+      Sustituye la colección por <code>'LANDSAT/LT05/C02/T1_L2'</code> (Landsat 5, hasta 2012) o <code>'LANDSAT/LE07/C02/T1_L2'</code> (Landsat 7). Los mismos índices se recalculan usando <code>SR_B3/SR_B1</code> (óxidos) y <code>SR_B5/SR_B7</code> (arcillas) — la física es idéntica, solo cambia el número de banda.
+    </div>
+  </div>
+
+  <div class="callout call-ok">
+    <div class="callout-icon">📈</div>
+    <div class="callout-body">
+      <div class="callout-title">Uso multitemporal — comparar décadas</div>
+      Ejecuta el mismo bloque de código dos veces con distintos <code>PARAMS.dateStart/dateEnd</code> (ej. 1990 vs. 2023) sobre el mismo <code>roi</code> y resta los índices resultantes. Es la forma más directa de detectar nueva exposición de roca por erosión, movimientos de tierra, o expansión de drenaje ácido de minas (AMD) a lo largo del tiempo.
+    </div>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="nav-prev" onclick="go(3)">← ASTER</button>
+    <span class="nav-center">Módulo 5 de 6</span>
+    <button class="nav-next" onclick="go(5)">Fusión + Campo →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════ MÓDULO 6 ══════════════════════════ -->
+<div class="lesson" id="L5">
+  <div class="lesson-tag">Módulo 6 de 6 — Integración final</div>
+  <h1 class="lesson-h1">Fusión multisensor, priorización y exportación</h1>
+  <p class="lesson-intro">Aquí combinas los índices de los tres sensores en un único mapa de prospectividad, y lo conviertes en targets concretos y capas listas para GIS — sin importar qué zona hayas elegido en el Módulo 2.</p>
+
+  <div class="sh">Paso 1 — Normalizar cada índice al mismo rango [0,1]</div>
+  <p>Cada índice tiene una escala distinta (unos van de 0.8 a 1.6, otros de 1 a 40). Antes de sumarlos hay que llevarlos a un rango común usando percentiles robustos P5–P95, que ignoran outliers extremos (nubes residuales, píxeles corruptos).</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Fusión</span><span class="code-note">Normalización robusta</span></div>
+    <pre><span class="kw">var</span> <span class="var">normalize01</span> <span class="op">=</span> <span class="kw">function</span><span class="punc">(</span><span class="var">img</span><span class="punc">) {</span>
+  <span class="kw">var</span> <span class="var">stats</span> <span class="op">=</span> <span class="var">img</span><span class="punc">.</span><span class="fn">reduceRegion</span><span class="punc">({</span>
+    <span class="prop">reducer</span><span class="op">:</span> <span class="fn">ee.Reducer.percentile</span><span class="punc">([</span><span class="num">5</span><span class="punc">,</span> <span class="num">95</span><span class="punc">]),</span>
+    <span class="prop">geometry</span><span class="op">:</span> <span class="var">roi</span><span class="punc">,</span> <span class="prop">scale</span><span class="op">:</span> <span class="num">30</span><span class="punc">,</span> <span class="prop">bestEffort</span><span class="op">:</span> <span class="kw">true</span>
+  <span class="punc">});</span>
+  <span class="kw">var</span> <span class="var">minVal</span> <span class="op">=</span> <span class="fn">ee.Number</span><span class="punc">(</span><span class="var">stats</span><span class="punc">.</span><span class="fn">values</span><span class="punc">().</span><span class="fn">get</span><span class="punc">(</span><span class="num">0</span><span class="punc">));</span>
+  <span class="kw">var</span> <span class="var">maxVal</span> <span class="op">=</span> <span class="fn">ee.Number</span><span class="punc">(</span><span class="var">stats</span><span class="punc">.</span><span class="fn">values</span><span class="punc">().</span><span class="fn">get</span><span class="punc">(</span><span class="num">1</span><span class="punc">));</span>
+  <span class="kw">var</span> <span class="var">safeMax</span> <span class="op">=</span> <span class="fn">ee.Algorithms.If</span><span class="punc">(</span><span class="var">maxVal</span><span class="punc">.</span><span class="fn">subtract</span><span class="punc">(</span><span class="var">minVal</span><span class="punc">).</span><span class="fn">gt</span><span class="punc">(</span><span class="num">1e-10</span><span class="punc">),</span> <span class="var">maxVal</span><span class="punc">,</span> <span class="var">minVal</span><span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="num">1</span><span class="punc">));</span>
+  <span class="kw">return</span> <span class="var">img</span><span class="punc">.</span><span class="fn">subtract</span><span class="punc">(</span><span class="var">minVal</span><span class="punc">).</span><span class="fn">divide</span><span class="punc">(</span><span class="fn">ee.Number</span><span class="punc">(</span><span class="var">safeMax</span><span class="punc">).</span><span class="fn">subtract</span><span class="punc">(</span><span class="var">minVal</span><span class="punc">)).</span><span class="fn">clamp</span><span class="punc">(</span><span class="num">0</span><span class="punc">,</span> <span class="num">1</span><span class="punc">);</span>
+<span class="punc">};</span>
+</pre>
+  </div>
+
+  <div class="sh">Paso 2 — Ponderar y combinar</div>
+  <div class="wbar-section">
+    <div class="wbar-title">Modelo completo — cuando ASTER SWIR cubre tu zona</div>
+    <div class="wbar-row">
+      <span class="wbar-label">Alunita/Caolinita/Sericita (ASTER)</span>
+      <div class="wbar-track"><div class="wbar-fill" style="width:30%;background:#f85149"></div></div>
+      <span class="wbar-pct">30%</span>
+    </div>
+    <div class="wbar-row">
+      <span class="wbar-label">Arcillas Al–OH (Sentinel-2)</span>
+      <div class="wbar-track"><div class="wbar-fill" style="width:25%;background:#e3b341"></div></div>
+      <span class="wbar-pct">25%</span>
+    </div>
+    <div class="wbar-row">
+      <span class="wbar-label">Óxidos de Fe (S2 + Landsat)</span>
+      <div class="wbar-track"><div class="wbar-fill" style="width:20%;background:#388bfd"></div></div>
+      <span class="wbar-pct">20%</span>
+    </div>
+    <div class="wbar-row">
+      <span class="wbar-label">Sílice / carbonatos TIR (ASTER)</span>
+      <div class="wbar-track"><div class="wbar-fill" style="width:15%;background:#bc8cff"></div></div>
+      <span class="wbar-pct">15%</span>
+    </div>
+    <div class="wbar-row">
+      <span class="wbar-label">Persistencia histórica (Landsat)</span>
+      <div class="wbar-track"><div class="wbar-fill" style="width:10%;background:#39d0d0"></div></div>
+      <span class="wbar-pct">10%</span>
+    </div>
+    <div class="wbar-divider"></div>
+    <div class="total-row"><span>Total</span><span style="color:var(--gold)">100%</span></div>
+  </div>
+
+  <div class="callout call-warn">
+    <div class="callout-icon">🧩</div>
+    <div class="callout-body">
+      <div class="callout-title">Si tu zona no tiene cobertura ASTER SWIR utilizable</div>
+      Pasa esto en zonas fuera de la huella de escenas ASTER pre-2008, o con nubosidad persistente en esas fechas. La solución: redistribuye el 45% que ocupaba ASTER (30%+15%) hacia Sentinel-2 y Landsat, quedando <strong>Arcillas Al–OH 45% · Óxidos de Fe 35% · Persistencia histórica 20%</strong>. El modelo sigue siendo válido — pierde capacidad de discriminar el mineral de arcilla exacto, pero conserva la detección de zonas anómalas.
+    </div>
+  </div>
+
+  <div class="callout call-warn">
+    <div class="callout-icon">⚠</div>
+    <div class="callout-body">
+      <div class="callout-title">Si solo ejecutaste hasta aquí y no viste nada en el mapa, es normal</div>
+      El bloque de la versión anterior calculaba <code>prospectividad</code> pero nunca la agregaba al mapa con <code>Map.addLayer</code>, y el curso nunca daba el código para convertir ese mapa continuo en polígonos de target. El bloque de abajo corrige ambas cosas, y además usa <code>.unmask(0)</code> para que, si tu ROI no tiene cobertura ASTER SWIR, esa capa faltante sume 0 en vez de anular todo el resultado.
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Fusión</span><span class="code-note">Suma ponderada + visualización</span></div>
+    <pre><span class="cm">// safeNorm(): normaliza [0,1] y además rellena con 0 los píxeles sin datos</span>
+<span class="cm">// (por ejemplo, si tu ROI no tiene cobertura ASTER SWIR) para que un solo</span>
+<span class="cm">// sensor faltante no anule todo el mapa de prospectividad.</span>
+<span class="kw">var</span> <span class="prop">safeNorm</span> <span class="op">=</span> <span class="kw">function</span><span class="punc">(</span><span class="prop">img</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">return</span> <span class="fn">normalize01</span><span class="punc">(</span><span class="prop">img</span><span class="punc">)</span><span class="punc">.</span><span class="fn">unmask</span><span class="punc">(</span><span class="num">0</span><span class="punc">)</span><span class="punc">;</span>
+<span class="punc">}</span><span class="punc">;</span>
+
+<span class="kw">var</span> <span class="prop">prospectividad</span> <span class="op">=</span> <span class="fn">safeNorm</span><span class="punc">(</span><span class="var">alunitaIndex</span><span class="punc">.</span><span class="fn">max</span><span class="punc">(</span><span class="prop">caolinitaIndex</span><span class="punc">)</span><span class="punc">.</span><span class="fn">max</span><span class="punc">(</span><span class="prop">sericitaIndex</span><span class="punc">)</span><span class="punc">)</span><span class="punc">.</span><span class="fn">multiply</span><span class="punc">(</span><span class="num">0.30</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="fn">safeNorm</span><span class="punc">(</span><span class="prop">arcillaS2</span><span class="punc">)</span><span class="punc">.</span><span class="fn">multiply</span><span class="punc">(</span><span class="num">0.25</span><span class="punc">)</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="fn">safeNorm</span><span class="punc">(</span><span class="prop">feOxideS2</span><span class="punc">)</span><span class="punc">.</span><span class="fn">multiply</span><span class="punc">(</span><span class="num">0.20</span><span class="punc">)</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="fn">safeNorm</span><span class="punc">(</span><span class="prop">siliceTirIndex</span><span class="punc">)</span><span class="punc">.</span><span class="fn">multiply</span><span class="punc">(</span><span class="num">0.15</span><span class="punc">)</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="fn">safeNorm</span><span class="punc">(</span><span class="prop">feOxideL8</span><span class="punc">)</span><span class="punc">.</span><span class="fn">multiply</span><span class="punc">(</span><span class="num">0.10</span><span class="punc">)</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">rename</span><span class="punc">(</span><span class="str">'prospectividad'</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="var">Map</span><span class="punc">.</span><span class="fn">addLayer</span><span class="punc">(</span><span class="prop">prospectividad</span><span class="punc">,</span>
+  <span class="punc">{</span><span class="prop">min</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span> <span class="prop">max</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="prop">palette</span><span class="punc">:</span> <span class="punc">[</span><span class="str">'1a1a2e'</span><span class="punc">,</span> <span class="str">'3b0f70'</span><span class="punc">,</span> <span class="str">'8c2981'</span><span class="punc">,</span> <span class="str">'de4968'</span><span class="punc">,</span> <span class="str">'fe9f6d'</span><span class="punc">,</span> <span class="str">'fcfdbf'</span><span class="punc">]</span><span class="punc">}</span><span class="punc">,</span>
+  <span class="str">'Prospectividad integrada'</span><span class="punc">)</span><span class="punc">;</span>
+</pre>
+  </div>
+
+  <div class="sh">Paso 3 — Vectorizar y clasificar targets</div>
+  <p>El mapa de prospectividad es continuo (cada píxel vale entre 0 y 1). Para obtener polígonos concretos que puedas llevar a campo, hay que aplicar un umbral, agrupar los píxeles contiguos que lo superan, y calificar cada polígono resultante según su valor medio.</p>
+  <div class="grid g3">
+    <div class="card red">
+      <div class="card-icon">🥇</div>
+      <div class="card-title" style="color:var(--red)">Prioridad 1 — Crítica</div>
+      <div class="card-body">Prospectividad media &gt; 0.65 en un polígono &gt; 0.5 Ha. Señal mineral fuerte y persistente entre sensores. Acción: <em>calicatas inmediatas + muestreo geoquímico sistemático.</em></div>
+    </div>
+    <div class="card amber">
+      <div class="card-icon">🥈</div>
+      <div class="card-title" style="color:var(--amber)">Prioridad 2 — Alta</div>
+      <div class="card-body">Prospectividad entre 0.45 y 0.65, o señal fuerte en un solo sensor sin confirmación cruzada. Acción: <em>mapeo geológico de detalle + revisión con otra fecha/sensor.</em></div>
+    </div>
+    <div class="card blue">
+      <div class="card-icon">🥉</div>
+      <div class="card-title" style="color:var(--blue)">Prioridad 3 — Moderada</div>
+      <div class="card-body">Resto de anomalías con área mínima suficiente. Señal débil o alta cobertura vegetal. Acción: <em>muestreo geoquímico de reconocimiento.</em></div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Targets</span><span class="code-note">Umbral, vectorización y prioridad</span></div>
+    <pre><span class="kw">var</span> <span class="prop">UMBRAL_TARGET</span>  <span class="op">=</span> <span class="num">0.35</span><span class="punc">;</span> <span class="cm">// umbral mínimo para considerar "anomalía" — súbelo/bájalo según tu histograma</span>
+<span class="kw">var</span> <span class="prop">AREA_MINIMA_HA</span> <span class="op">=</span> <span class="num">0.5</span><span class="punc">;</span>  <span class="cm">// descarta polígonos de 1 píxel (ruido)</span>
+
+<span class="kw">var</span> <span class="prop">targetsRaw</span> <span class="op">=</span> <span class="var">prospectividad</span><span class="punc">.</span><span class="fn">gte</span><span class="punc">(</span><span class="prop">UMBRAL_TARGET</span><span class="punc">)</span><span class="punc">.</span><span class="fn">selfMask</span><span class="punc">(</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="kw">var</span> <span class="prop">targets</span> <span class="op">=</span> <span class="var">targetsRaw</span><span class="punc">.</span><span class="fn">reduceToVectors</span><span class="punc">(</span><span class="punc">{</span>
+  <span class="prop">reducer</span><span class="punc">:</span> <span class="var">ee</span><span class="punc">.</span><span class="prop">Reducer</span><span class="punc">.</span><span class="fn">countEvery</span><span class="punc">(</span><span class="punc">)</span><span class="punc">,</span>
+  <span class="prop">geometry</span><span class="punc">:</span> <span class="prop">roi</span><span class="punc">,</span>
+  <span class="prop">scale</span><span class="punc">:</span> <span class="num">30</span><span class="punc">,</span>
+  <span class="prop">geometryType</span><span class="punc">:</span> <span class="str">'polygon'</span><span class="punc">,</span>
+  <span class="prop">eightConnected</span><span class="punc">:</span> <span class="kw">true</span><span class="punc">,</span>
+  <span class="prop">labelProperty</span><span class="punc">:</span> <span class="str">'id_target'</span><span class="punc">,</span>
+  <span class="prop">bestEffort</span><span class="punc">:</span> <span class="kw">true</span>
+<span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="prop">targets</span> <span class="op">=</span> <span class="var">targets</span><span class="punc">.</span><span class="fn">map</span><span class="punc">(</span><span class="kw">function</span> <span class="punc">(</span><span class="prop">f</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">var</span> <span class="prop">areaHa</span> <span class="op">=</span> <span class="var">f</span><span class="punc">.</span><span class="fn">geometry</span><span class="punc">(</span><span class="punc">)</span><span class="punc">.</span><span class="fn">area</span><span class="punc">(</span><span class="punc">)</span><span class="punc">.</span><span class="fn">divide</span><span class="punc">(</span><span class="num">10000</span><span class="punc">)</span><span class="punc">;</span>
+  <span class="kw">var</span> <span class="prop">stats</span> <span class="op">=</span> <span class="var">prospectividad</span><span class="punc">.</span><span class="fn">reduceRegion</span><span class="punc">(</span><span class="punc">{</span>
+    <span class="prop">reducer</span><span class="punc">:</span> <span class="var">ee</span><span class="punc">.</span><span class="prop">Reducer</span><span class="punc">.</span><span class="fn">mean</span><span class="punc">(</span><span class="punc">)</span><span class="punc">,</span> <span class="prop">geometry</span><span class="punc">:</span> <span class="var">f</span><span class="punc">.</span><span class="fn">geometry</span><span class="punc">(</span><span class="punc">)</span><span class="punc">,</span> <span class="prop">scale</span><span class="punc">:</span> <span class="num">30</span><span class="punc">,</span> <span class="prop">bestEffort</span><span class="punc">:</span> <span class="kw">true</span>
+  <span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+  <span class="kw">var</span> <span class="prop">media</span> <span class="op">=</span> <span class="var">ee</span><span class="punc">.</span><span class="fn">Number</span><span class="punc">(</span><span class="var">stats</span><span class="punc">.</span><span class="fn">get</span><span class="punc">(</span><span class="str">'prospectividad'</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+  <span class="kw">var</span> <span class="prop">prioridad</span> <span class="op">=</span> <span class="var">ee</span><span class="punc">.</span><span class="prop">Algorithms</span><span class="punc">.</span><span class="fn">If</span><span class="punc">(</span><span class="var">media</span><span class="punc">.</span><span class="fn">gte</span><span class="punc">(</span><span class="num">0.65</span><span class="punc">)</span><span class="punc">,</span> <span class="str">'P1 - Critica'</span><span class="punc">,</span>
+                    <span class="var">ee</span><span class="punc">.</span><span class="prop">Algorithms</span><span class="punc">.</span><span class="fn">If</span><span class="punc">(</span><span class="var">media</span><span class="punc">.</span><span class="fn">gte</span><span class="punc">(</span><span class="num">0.45</span><span class="punc">)</span><span class="punc">,</span> <span class="str">'P2 - Alta'</span><span class="punc">,</span> <span class="str">'P3 - Moderada'</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+  <span class="kw">return</span> <span class="var">f</span><span class="punc">.</span><span class="fn">set</span><span class="punc">(</span><span class="punc">{</span><span class="prop">area_ha</span><span class="punc">:</span> <span class="prop">areaHa</span><span class="punc">,</span> <span class="prop">prospectividad_media</span><span class="punc">:</span> <span class="prop">media</span><span class="punc">,</span> <span class="prop">prioridad</span><span class="punc">:</span> <span class="prop">prioridad</span><span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+<span class="punc">}</span><span class="punc">)</span><span class="punc">.</span><span class="fn">filter</span><span class="punc">(</span><span class="var">ee</span><span class="punc">.</span><span class="prop">Filter</span><span class="punc">.</span><span class="fn">gt</span><span class="punc">(</span><span class="str">'area_ha'</span><span class="punc">,</span> <span class="prop">AREA_MINIMA_HA</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="fn">print</span><span class="punc">(</span><span class="str">'Targets detectados (tras filtrar por área mínima):'</span><span class="punc">,</span> <span class="var">targets</span><span class="punc">.</span><span class="fn">size</span><span class="punc">(</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+<span class="fn">print</span><span class="punc">(</span><span class="str">'Tabla de targets:'</span><span class="punc">,</span> <span class="prop">targets</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="kw">var</span> <span class="prop">p1</span> <span class="op">=</span> <span class="var">targets</span><span class="punc">.</span><span class="fn">filter</span><span class="punc">(</span><span class="var">ee</span><span class="punc">.</span><span class="prop">Filter</span><span class="punc">.</span><span class="fn">eq</span><span class="punc">(</span><span class="str">'prioridad'</span><span class="punc">,</span> <span class="str">'P1 - Critica'</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+<span class="kw">var</span> <span class="prop">p2</span> <span class="op">=</span> <span class="var">targets</span><span class="punc">.</span><span class="fn">filter</span><span class="punc">(</span><span class="var">ee</span><span class="punc">.</span><span class="prop">Filter</span><span class="punc">.</span><span class="fn">eq</span><span class="punc">(</span><span class="str">'prioridad'</span><span class="punc">,</span> <span class="str">'P2 - Alta'</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+<span class="kw">var</span> <span class="prop">p3</span> <span class="op">=</span> <span class="var">targets</span><span class="punc">.</span><span class="fn">filter</span><span class="punc">(</span><span class="var">ee</span><span class="punc">.</span><span class="prop">Filter</span><span class="punc">.</span><span class="fn">eq</span><span class="punc">(</span><span class="str">'prioridad'</span><span class="punc">,</span> <span class="str">'P3 - Moderada'</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="var">Map</span><span class="punc">.</span><span class="fn">addLayer</span><span class="punc">(</span><span class="var">p3</span><span class="punc">.</span><span class="fn">style</span><span class="punc">(</span><span class="punc">{</span><span class="prop">color</span><span class="punc">:</span> <span class="str">'388bfd'</span><span class="punc">,</span> <span class="prop">fillColor</span><span class="punc">:</span> <span class="str">'00000000'</span><span class="punc">,</span> <span class="prop">width</span><span class="punc">:</span> <span class="num">2</span><span class="punc">}</span><span class="punc">)</span><span class="punc">,</span> <span class="punc">{</span><span class="punc">}</span><span class="punc">,</span> <span class="str">'Targets · Prioridad 3'</span><span class="punc">)</span><span class="punc">;</span>
+<span class="var">Map</span><span class="punc">.</span><span class="fn">addLayer</span><span class="punc">(</span><span class="var">p2</span><span class="punc">.</span><span class="fn">style</span><span class="punc">(</span><span class="punc">{</span><span class="prop">color</span><span class="punc">:</span> <span class="str">'e3b341'</span><span class="punc">,</span> <span class="prop">fillColor</span><span class="punc">:</span> <span class="str">'00000000'</span><span class="punc">,</span> <span class="prop">width</span><span class="punc">:</span> <span class="num">2</span><span class="punc">}</span><span class="punc">)</span><span class="punc">,</span> <span class="punc">{</span><span class="punc">}</span><span class="punc">,</span> <span class="str">'Targets · Prioridad 2'</span><span class="punc">)</span><span class="punc">;</span>
+<span class="var">Map</span><span class="punc">.</span><span class="fn">addLayer</span><span class="punc">(</span><span class="var">p1</span><span class="punc">.</span><span class="fn">style</span><span class="punc">(</span><span class="punc">{</span><span class="prop">color</span><span class="punc">:</span> <span class="str">'f85149'</span><span class="punc">,</span> <span class="prop">fillColor</span><span class="punc">:</span> <span class="str">'00000000'</span><span class="punc">,</span> <span class="prop">width</span><span class="punc">:</span> <span class="num">3</span><span class="punc">}</span><span class="punc">)</span><span class="punc">,</span> <span class="punc">{</span><span class="punc">}</span><span class="punc">,</span> <span class="str">'Targets · Prioridad 1'</span><span class="punc">)</span><span class="punc">;</span>
+</pre>
+  </div>
+
+  <div class="sh">Paso 4 — Estadísticas y panel interactivo de inspección</div>
+  <p>Este bloque agrega un panel en la esquina del mapa: al hacer clic en cualquier punto, te muestra al instante el valor de la prospectividad y de cada índice individual en ese lugar. También imprime un histograma con la distribución de prospectividad de todo tu ROI.</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Inspección</span><span class="code-note">Panel de clic + histograma</span></div>
+    <pre><span class="cm">// Panel + histograma de estadísticas</span>
+<span class="kw">var</span> <span class="prop">panel</span> <span class="op">=</span> <span class="var">ui</span><span class="punc">.</span><span class="fn">Panel</span><span class="punc">(</span><span class="punc">{</span>
+  <span class="prop">style</span><span class="punc">:</span> <span class="punc">{</span><span class="prop">position</span><span class="punc">:</span> <span class="str">'bottom-left'</span><span class="punc">,</span> <span class="prop">padding</span><span class="punc">:</span> <span class="str">'10px'</span><span class="punc">,</span> <span class="prop">width</span><span class="punc">:</span> <span class="str">'280px'</span><span class="punc">,</span> <span class="prop">backgroundColor</span><span class="punc">:</span> <span class="str">'rgba(20,20,20,0.85)'</span><span class="punc">}</span>
+<span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+<span class="var">panel</span><span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="var">ui</span><span class="punc">.</span><span class="fn">Label</span><span class="punc">(</span><span class="str">'👆 Haz clic en cualquier punto del mapa'</span><span class="punc">,</span> <span class="punc">{</span><span class="prop">color</span><span class="punc">:</span> <span class="str">'white'</span><span class="punc">,</span> <span class="prop">fontWeight</span><span class="punc">:</span> <span class="str">'bold'</span><span class="punc">}</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+<span class="var">Map</span><span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="prop">panel</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="kw">var</span> <span class="prop">capasParaInspeccionar</span> <span class="op">=</span> <span class="var">ee</span><span class="punc">.</span><span class="prop">Image</span><span class="punc">.</span><span class="fn">cat</span><span class="punc">(</span><span class="punc">[</span>
+  <span class="prop">prospectividad</span><span class="punc">,</span>
+  <span class="prop">alunitaIndex</span><span class="punc">,</span> <span class="prop">caolinitaIndex</span><span class="punc">,</span> <span class="prop">sericitaIndex</span><span class="punc">,</span>
+  <span class="prop">arcillaS2</span><span class="punc">,</span> <span class="prop">feOxideS2</span><span class="punc">,</span>
+  <span class="prop">siliceTirIndex</span><span class="punc">,</span> <span class="prop">feOxideL8</span>
+<span class="punc">]</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="var">Map</span><span class="punc">.</span><span class="fn">onClick</span><span class="punc">(</span><span class="kw">function</span> <span class="punc">(</span><span class="prop">coords</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">var</span> <span class="prop">punto</span> <span class="op">=</span> <span class="var">ee</span><span class="punc">.</span><span class="prop">Geometry</span><span class="punc">.</span><span class="fn">Point</span><span class="punc">(</span><span class="punc">[</span><span class="var">coords</span><span class="punc">.</span><span class="prop">lon</span><span class="punc">,</span> <span class="var">coords</span><span class="punc">.</span><span class="prop">lat</span><span class="punc">]</span><span class="punc">)</span><span class="punc">;</span>
+  <span class="kw">var</span> <span class="prop">valores</span> <span class="op">=</span> <span class="var">capasParaInspeccionar</span><span class="punc">.</span><span class="fn">reduceRegion</span><span class="punc">(</span><span class="punc">{</span>
+    <span class="prop">reducer</span><span class="punc">:</span> <span class="var">ee</span><span class="punc">.</span><span class="prop">Reducer</span><span class="punc">.</span><span class="fn">first</span><span class="punc">(</span><span class="punc">)</span><span class="punc">,</span> <span class="prop">geometry</span><span class="punc">:</span> <span class="prop">punto</span><span class="punc">,</span> <span class="prop">scale</span><span class="punc">:</span> <span class="num">30</span>
+  <span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+
+  <span class="var">valores</span><span class="punc">.</span><span class="fn">evaluate</span><span class="punc">(</span><span class="kw">function</span> <span class="punc">(</span><span class="prop">resultado</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="var">panel</span><span class="punc">.</span><span class="fn">clear</span><span class="punc">(</span><span class="punc">)</span><span class="punc">;</span>
+    <span class="var">panel</span><span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="var">ui</span><span class="punc">.</span><span class="fn">Label</span><span class="punc">(</span><span class="str">'📍 '</span> <span class="op">+</span> <span class="var">coords</span><span class="punc">.</span><span class="prop">lon</span><span class="punc">.</span><span class="fn">toFixed</span><span class="punc">(</span><span class="num">4</span><span class="punc">)</span> <span class="op">+</span> <span class="str">', '</span> <span class="op">+</span> <span class="var">coords</span><span class="punc">.</span><span class="prop">lat</span><span class="punc">.</span><span class="fn">toFixed</span><span class="punc">(</span><span class="num">4</span><span class="punc">)</span><span class="punc">,</span>
+      <span class="punc">{</span><span class="prop">color</span><span class="punc">:</span> <span class="str">'white'</span><span class="punc">,</span> <span class="prop">fontWeight</span><span class="punc">:</span> <span class="str">'bold'</span><span class="punc">}</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+    <span class="kw">for</span> <span class="punc">(</span><span class="kw">var</span> <span class="prop">nombre</span> <span class="prop">in</span> <span class="prop">resultado</span><span class="punc">)</span> <span class="punc">{</span>
+      <span class="kw">var</span> <span class="prop">valor</span> <span class="op">=</span> <span class="prop">resultado</span><span class="punc">[</span><span class="prop">nombre</span><span class="punc">]</span><span class="punc">;</span>
+      <span class="kw">var</span> <span class="prop">texto</span> <span class="op">=</span> <span class="punc">(</span><span class="prop">valor</span> <span class="op">===</span> <span class="kw">null</span><span class="punc">)</span> ? <span class="str">'sin datos'</span> <span class="punc">:</span> <span class="var">valor</span><span class="punc">.</span><span class="fn">toFixed</span><span class="punc">(</span><span class="num">3</span><span class="punc">)</span><span class="punc">;</span>
+      <span class="var">panel</span><span class="punc">.</span><span class="fn">add</span><span class="punc">(</span><span class="var">ui</span><span class="punc">.</span><span class="fn">Label</span><span class="punc">(</span><span class="prop">nombre</span> <span class="op">+</span> <span class="str">':  '</span> <span class="op">+</span> <span class="prop">texto</span><span class="punc">,</span> <span class="punc">{</span><span class="prop">color</span><span class="punc">:</span> <span class="str">'#dddddd'</span><span class="punc">,</span> <span class="prop">fontSize</span><span class="punc">:</span> <span class="str">'12px'</span><span class="punc">}</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+    <span class="punc">}</span>
+  <span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+<span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="fn">print</span><span class="punc">(</span><span class="var">ui</span><span class="punc">.</span><span class="prop">Chart</span><span class="punc">.</span><span class="prop">image</span><span class="punc">.</span><span class="fn">histogram</span><span class="punc">(</span><span class="punc">{</span><span class="prop">image</span><span class="punc">:</span> <span class="prop">prospectividad</span><span class="punc">,</span> <span class="prop">region</span><span class="punc">:</span> <span class="prop">roi</span><span class="punc">,</span> <span class="prop">scale</span><span class="punc">:</span> <span class="num">30</span><span class="punc">,</span> <span class="prop">maxBuckets</span><span class="punc">:</span> <span class="num">40</span><span class="punc">}</span><span class="punc">)</span>
+  <span class="punc">.</span><span class="fn">setOptions</span><span class="punc">(</span><span class="punc">{</span>
+    <span class="prop">title</span><span class="punc">:</span> <span class="str">'Distribución de prospectividad en el ROI'</span><span class="punc">,</span>
+    <span class="prop">hAxis</span><span class="punc">:</span> <span class="punc">{</span><span class="prop">title</span><span class="punc">:</span> <span class="str">'Prospectividad (0-1)'</span><span class="punc">}</span><span class="punc">,</span>
+    <span class="prop">vAxis</span><span class="punc">:</span> <span class="punc">{</span><span class="prop">title</span><span class="punc">:</span> <span class="str">'N° de píxeles'</span><span class="punc">}</span>
+  <span class="punc">}</span><span class="punc">)</span><span class="punc">)</span><span class="punc">;</span>
+</pre>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-top:-8px">El clic no funciona sobre el visor estático de esta página — solo dentro del <a href="https://code.earthengine.google.com" target="_blank" rel="noopener">Code Editor de GEE</a>, donde <code>Map</code> es un mapa interactivo real.</p>
+
+  <div class="sh">Paso 5 — Exportar productos listos para GIS</div>
+  <div class="export-list">
+    <div class="exp-item">
+      <div class="exp-num" style="background:#0d2040;color:var(--blue)">1</div>
+      <div class="exp-body">
+        <div class="exp-title">GeoJSON — Targets con atributos</div>
+        <div class="exp-desc">Polígonos vectorizados a partir del umbral de prioridad, con campos <code>prioridad</code>, <code>prospectividad_media</code> y área en Ha. Importable directo en QGIS/ArcGIS.</div>
+        <span class="exp-meta">GeoJSON · Vectorial</span>
+      </div>
+    </div>
+    <div class="exp-item">
+      <div class="exp-num" style="background:#0d3319;color:var(--green)">2</div>
+      <div class="exp-body">
+        <div class="exp-title">Stack raster multisensor</div>
+        <div class="exp-desc">Todos los índices normalizados (Sentinel-2, ASTER y Landsat) más la prospectividad integrada, en un único GeoTIFF multibanda.</div>
+        <span class="exp-meta">GeoTIFF · 30 m · Float32</span>
+      </div>
+    </div>
+    <div class="exp-item">
+      <div class="exp-num" style="background:#3d2800;color:var(--amber)">3</div>
+      <div class="exp-body">
+        <div class="exp-title">RGB mineralógico — falso color</div>
+        <div class="exp-desc">R = Alunita/Caolinita, G = Arcilla_OH (S2), B = Óxidos de Fe. Escalado a 8 bits para visualización directa en cualquier SIG.</div>
+        <span class="exp-meta">GeoTIFF · Byte (0–255)</span>
+      </div>
+    </div>
+    <div class="exp-item">
+      <div class="exp-num" style="background:#1a0f2e;color:var(--purple)">4</div>
+      <div class="exp-body">
+        <div class="exp-title">CSV — Estadísticas zonales por target</div>
+        <div class="exp-desc">Valor medio de cada índice por polígono-target, para priorizar la ruta de campo antes de salir.</div>
+        <span class="exp-meta">CSV · Tabular</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Exportación</span><span class="code-note">4 tareas reales a Google Drive</span></div>
+    <pre><span class="cm">// 1. Targets como GeoJSON (para QGIS/ArcGIS)</span>
+<span class="var">Export</span><span class="punc">.</span><span class="prop">table</span><span class="punc">.</span><span class="fn">toDrive</span><span class="punc">(</span><span class="punc">{</span>
+  <span class="prop">collection</span><span class="punc">:</span> <span class="prop">targets</span><span class="punc">,</span>
+  <span class="prop">description</span><span class="punc">:</span> <span class="str">'Targets_GeoJSON'</span><span class="punc">,</span>
+  <span class="prop">folder</span><span class="punc">:</span> <span class="str">'exploracion_mineral'</span><span class="punc">,</span>
+  <span class="prop">fileNamePrefix</span><span class="punc">:</span> <span class="str">'targets'</span><span class="punc">,</span>
+  <span class="prop">fileFormat</span><span class="punc">:</span> <span class="str">'GeoJSON'</span>
+<span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="cm">// 2. Estadísticas de los targets como CSV</span>
+<span class="var">Export</span><span class="punc">.</span><span class="prop">table</span><span class="punc">.</span><span class="fn">toDrive</span><span class="punc">(</span><span class="punc">{</span>
+  <span class="prop">collection</span><span class="punc">:</span> <span class="prop">targets</span><span class="punc">,</span>
+  <span class="prop">description</span><span class="punc">:</span> <span class="str">'Targets_CSV'</span><span class="punc">,</span>
+  <span class="prop">folder</span><span class="punc">:</span> <span class="str">'exploracion_mineral'</span><span class="punc">,</span>
+  <span class="prop">fileNamePrefix</span><span class="punc">:</span> <span class="str">'targets_estadisticas'</span><span class="punc">,</span>
+  <span class="prop">fileFormat</span><span class="punc">:</span> <span class="str">'CSV'</span>
+<span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="cm">// 3. Stack multisensor completo (todos los índices + prospectividad)</span>
+<span class="var">Export</span><span class="punc">.</span><span class="prop">image</span><span class="punc">.</span><span class="fn">toDrive</span><span class="punc">(</span><span class="punc">{</span>
+  <span class="prop">image</span><span class="punc">:</span> <span class="var">ee</span><span class="punc">.</span><span class="prop">Image</span><span class="punc">.</span><span class="fn">cat</span><span class="punc">(</span><span class="punc">[</span>
+    <span class="prop">prospectividad</span><span class="punc">,</span>
+    <span class="prop">alunitaIndex</span><span class="punc">,</span> <span class="prop">caolinitaIndex</span><span class="punc">,</span> <span class="prop">sericitaIndex</span><span class="punc">,</span> <span class="prop">oxidosVnirIndex</span><span class="punc">,</span>
+    <span class="prop">siliceTirIndex</span><span class="punc">,</span> <span class="prop">arcillaS2</span><span class="punc">,</span> <span class="prop">feOxideS2</span><span class="punc">,</span> <span class="prop">ferrosoS2</span><span class="punc">,</span> <span class="prop">feOxideL8</span><span class="punc">,</span> <span class="prop">arcillaL8</span>
+  <span class="punc">]</span><span class="punc">)</span><span class="punc">,</span>
+  <span class="prop">description</span><span class="punc">:</span> <span class="str">'Stack_Multisensor'</span><span class="punc">,</span>
+  <span class="prop">folder</span><span class="punc">:</span> <span class="str">'exploracion_mineral'</span><span class="punc">,</span>
+  <span class="prop">fileNamePrefix</span><span class="punc">:</span> <span class="str">'stack_multisensor'</span><span class="punc">,</span>
+  <span class="prop">region</span><span class="punc">:</span> <span class="prop">roi</span><span class="punc">,</span>
+  <span class="prop">scale</span><span class="punc">:</span> <span class="num">30</span><span class="punc">,</span>
+  <span class="prop">crs</span><span class="punc">:</span> <span class="str">'EPSG:4326'</span><span class="punc">,</span>
+  <span class="prop">maxPixels</span><span class="punc">:</span> <span class="num">1e9</span>
+<span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="cm">// 4. RGB mineralógico en 8 bits, listo para abrir en cualquier SIG</span>
+<span class="kw">var</span> <span class="prop">rgbMineral</span> <span class="op">=</span> <span class="var">ee</span><span class="punc">.</span><span class="prop">Image</span><span class="punc">.</span><span class="fn">cat</span><span class="punc">(</span><span class="punc">[</span>
+  <span class="var">alunitaIndex</span><span class="punc">.</span><span class="fn">max</span><span class="punc">(</span><span class="prop">caolinitaIndex</span><span class="punc">)</span><span class="punc">.</span><span class="fn">max</span><span class="punc">(</span><span class="prop">sericitaIndex</span><span class="punc">)</span><span class="punc">,</span>
+  <span class="prop">arcillaS2</span><span class="punc">,</span>
+  <span class="prop">feOxideS2</span>
+<span class="punc">]</span><span class="punc">)</span><span class="punc">.</span><span class="fn">unitScale</span><span class="punc">(</span><span class="num">0.8</span><span class="punc">,</span> <span class="num">1.6</span><span class="punc">)</span><span class="punc">.</span><span class="fn">multiply</span><span class="punc">(</span><span class="num">255</span><span class="punc">)</span><span class="punc">.</span><span class="fn">byte</span><span class="punc">(</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="var">Export</span><span class="punc">.</span><span class="prop">image</span><span class="punc">.</span><span class="fn">toDrive</span><span class="punc">(</span><span class="punc">{</span>
+  <span class="prop">image</span><span class="punc">:</span> <span class="prop">rgbMineral</span><span class="punc">,</span>
+  <span class="prop">description</span><span class="punc">:</span> <span class="str">'RGB_Mineralogico'</span><span class="punc">,</span>
+  <span class="prop">folder</span><span class="punc">:</span> <span class="str">'exploracion_mineral'</span><span class="punc">,</span>
+  <span class="prop">fileNamePrefix</span><span class="punc">:</span> <span class="str">'rgb_mineralogico'</span><span class="punc">,</span>
+  <span class="prop">region</span><span class="punc">:</span> <span class="prop">roi</span><span class="punc">,</span>
+  <span class="prop">scale</span><span class="punc">:</span> <span class="num">10</span><span class="punc">,</span>
+  <span class="prop">crs</span><span class="punc">:</span> <span class="str">'EPSG:4326'</span><span class="punc">,</span>
+  <span class="prop">maxPixels</span><span class="punc">:</span> <span class="num">1e9</span>
+<span class="punc">}</span><span class="punc">)</span><span class="punc">;</span>
+
+<span class="fn">print</span><span class="punc">(</span><span class="str">'4 tareas de exportación creadas: abre la pestaña "Tasks" (arriba a la derecha) y pulsa RUN en cada una.'</span><span class="punc">)</span><span class="punc">;</span>
+</pre>
+  </div>
+  <div class="callout call-info">
+    <div class="callout-icon">📂</div>
+    <div class="callout-body">
+      <div class="callout-title">Las exportaciones no se disparan solas</div>
+      <code>Export.*.toDrive()</code> solo <em>crea</em> la tarea. Tienes que ir a la pestaña <strong>Tasks</strong> (arriba a la derecha del Code Editor) y pulsar <strong>RUN</strong> en cada una para que realmente se generen los archivos en tu Google Drive, dentro de la carpeta <code>exploracion_mineral</code>.
+    </div>
+  </div>
+
+  <div class="sh">Workflow recomendado — de GEE al campo</div>
+  <div class="workflow">
+    <div class="wf-step">
+      <div class="wf-icon">📍</div>
+      <div class="wf-num">Paso 1</div>
+      <div class="wf-label">Definir tu ROI en PARAMS (Módulo 2)</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-icon">▶</div>
+      <div class="wf-num">Paso 2</div>
+      <div class="wf-label">Ejecutar los 3 bloques de sensores</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-icon">🧮</div>
+      <div class="wf-num">Paso 3</div>
+      <div class="wf-label">Fusionar y ajustar pesos si falta ASTER</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-icon">⚙</div>
+      <div class="wf-num">Paso 4</div>
+      <div class="wf-label">Lanzar exportaciones desde Tasks</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-icon">🗺</div>
+      <div class="wf-num">Paso 5</div>
+      <div class="wf-label">QGIS + geología regional</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-icon">⛏</div>
+      <div class="wf-num">Paso 6</div>
+      <div class="wf-label">Campaña de campo en targets P1</div>
+    </div>
+  </div>
+
+  <div class="callout call-red">
+    <div class="callout-icon">🔬</div>
+    <div class="callout-body">
+      <div class="callout-title">Advertencia científica fundamental</div>
+      Los tres sensores detectan <strong>halos de alteración hidrotermal</strong> — proxies indirectos de mineralización. La presencia de alunita, óxidos de Fe o arcillas en teledetección no confirma un depósito económico: existen sistemas alterados sin mineralización rentable. La confirmación requiere muestreo geoquímico y, eventualmente, perforación exploratoria. Este sistema prioriza el trabajo de campo — no sustituye la verificación en terreno.
+    </div>
+  </div>
+
+  <div class="sh" id="biblio">Bibliografía</div>
+  <p>Todas las fórmulas y afirmaciones técnicas de este curso están respaldadas por estas fuentes. Se verificaron una a una contra las publicaciones originales; la referencia "Agar &amp; Coulter 2007" del material previo no correspondía a ninguna publicación localizable y fue sustituida por Rowan et al. (2003), la fuente correcta y verificable para ese índice.</p>
+
+  <div class="biblio-group-title">Referencias científicas</div>
+  <div class="biblio-list">
+    <div class="biblio-item"><span class="biblio-num">1.</span>Sabins, F. F. (1999). Remote sensing for mineral exploration. <em>Ore Geology Reviews</em>, 14(3–4), 157–183. <a href="https://doi.org/10.1016/S0169-1368(99)00007-4" target="_blank" rel="noopener">doi.org/10.1016/S0169-1368(99)00007-4</a></div>
+    <div class="biblio-item"><span class="biblio-num">2.</span>Ninomiya, Y. (2002). Mapping quartz, carbonate minerals and mafic–ultramafic rocks using remotely sensed multispectral thermal infrared ASTER data. <em>Proceedings of SPIE</em>, 4710 (Thermosense XXIV), 191–202.</div>
+    <div class="biblio-item"><span class="biblio-num">3.</span>Ninomiya, Y. (2003). A stabilized vegetation index and several mineralogic indices defined for ASTER VNIR and SWIR data. <em>Proceedings of IGARSS 2003</em>, IEEE International Geoscience and Remote Sensing Symposium.<span class="biblio-note">Define los índices de alunita/caolinita/OH que se usan en el Módulo 4 (fórmulas simplificadas con fines didácticos).</span></div>
+    <div class="biblio-item"><span class="biblio-num">4.</span>Rowan, L. C. &amp; Mars, J. C. (2003). Lithologic mapping in the Mountain Pass, California area using Advanced Spaceborne Thermal Emission and Reflection Radiometer (ASTER) data. <em>Remote Sensing of Environment</em>, 84(3), 350–366. <a href="https://doi.org/10.1016/S0034-4257(02)00127-X" target="_blank" rel="noopener">doi.org/10.1016/S0034-4257(02)00127-X</a></div>
+    <div class="biblio-item"><span class="biblio-num">5.</span>Rowan, L. C., Hook, S. J., Abrams, M. J. &amp; Mars, J. C. (2003). Mapping hydrothermally altered rocks at Cuprite, Nevada, using the Advanced Spaceborne Thermal Emission and Reflection Radiometer (ASTER), a new satellite-imaging system. <em>Economic Geology</em>, 98(5), 1019–1027.<span class="biblio-note">Reemplaza a "Agar &amp; Coulter 2007" como fuente del índice de alunita en el Módulo 4 — es el estudio de validación clásico de índices SWIR de ASTER en un sitio de alteración muy bien caracterizado.</span></div>
+    <div class="biblio-item"><span class="biblio-num">6.</span>Corbett, G. J. &amp; Leach, T. M. (1998). <em>Southwest Pacific Rim Gold–Copper Systems: Structure, Alteration, and Mineralization.</em> Society of Economic Geologists, Special Publication No. 6, 236 p.</div>
+    <div class="biblio-item"><span class="biblio-num">7.</span>Crósta, A. P. &amp; Moore, J. M. (1989). Enhancement of Landsat Thematic Mapper imagery for residual soil mapping in SW Minas Gerais State, Brazil: a prospecting case history in greenstone belt terrain. <em>Proceedings of the 7th ERIM Thematic Conference: Remote Sensing for Geology</em>, 1173–1187.<span class="biblio-note">Origen de la "técnica Crósta" de PCA sobre bandas de óxidos de Fe, mencionada en el Módulo 5.</span></div>
+    <div class="biblio-item"><span class="biblio-num">8.</span>van der Werff, H. &amp; van der Meer, F. (2016). Sentinel-2A MSI and Landsat 8 OLI provide data continuity for geological remote sensing. <em>Remote Sensing</em>, 8(11), 883. <a href="https://doi.org/10.3390/rs8110883" target="_blank" rel="noopener">doi.org/10.3390/rs8110883</a><span class="biblio-note">Referencia añadida en esta actualización — respalda directamente la estrategia multisensor de los Módulos 3 y 5.</span></div>
+  </div>
+
+  <div class="biblio-group-title">Documentación técnica oficial</div>
+  <div class="biblio-list">
+    <div class="biblio-item"><span class="biblio-num">·</span>European Space Agency (2015). <em>Sentinel-2 User Handbook.</em> Copernicus Programme. <a href="https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi" target="_blank" rel="noopener">sentinel.esa.int</a></div>
+    <div class="biblio-item"><span class="biblio-num">·</span>USGS Earth Resources Observation and Science (EROS) Center (2020). Landsat 8-9 OLI/TIRS Collection 2 Level-2 Science Products [dataset]. U.S. Geological Survey. <a href="https://doi.org/10.5066/P9OGBGM6" target="_blank" rel="noopener">doi.org/10.5066/P9OGBGM6</a><span class="biblio-note">Fuente de los factores de escala (0.0000275 / −0.2) usados en el Módulo 5.</span></div>
+    <div class="biblio-item"><span class="biblio-num">·</span>NASA LP DAAC / METI (2001). <em>ASTER L1T Product User Guide.</em> Land Processes Distributed Active Archive Center. <a href="https://lpdaac.usgs.gov" target="_blank" rel="noopener">lpdaac.usgs.gov</a></div>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="nav-prev" onclick="go(4)">← Landsat</button>
+    <span class="nav-center">Módulo 6 de 6</span>
+    <button class="nav-next" onclick="go(6)">Anexo: Caso real Au →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════ ANEXO / MÓDULO 7 ══════════════════════════ -->
+<div class="lesson" id="L6">
+  <div class="lesson-tag">Anexo — Estudio de caso real</div>
+  <h1 class="lesson-h1">Sistema mono-sensor: ASTER + DEM + Machine Learning</h1>
+  <p class="lesson-intro">Los Módulos 1–6 enseñan el enfoque multisensor con ROI configurable. Este anexo documenta un caso real distinto: un sistema que profundiza en un <strong>solo sensor (ASTER)</strong> combinado con relieve (DEM) y clustering no supervisado (K-Means), aplicado a un polígono minero fijo. Sirve como segunda referencia — más profundidad mineralógica y estructural, a cambio de depender 100% de que ASTER cubra tu zona.</p>
+
+  <div class="sh">¿Cuándo usar este enfoque en vez del multisensor?</div>
+  <div class="grid g2">
+    <div class="card blue">
+      <div class="card-title">Usa el enfoque multisensor (Módulos 1–6)</div>
+      <div class="card-body">Cuando no sabes si ASTER cubre tu zona, cuando trabajas varias zonas distintas, o cuando priorizas velocidad y cobertura garantizada (Sentinel-2/Landsat) sobre la máxima resolución mineralógica.</div>
+    </div>
+    <div class="card amber">
+      <div class="card-title">Usa este enfoque mono-sensor + ML</div>
+      <div class="card-body">Cuando ya confirmaste que ASTER SWIR cubre bien tu concesión, tienes un DEM propio de buena resolución, y quieres exprimir la máxima discriminación mineralógica más un clustering no supervisado sobre toda la escena.</div>
+    </div>
+  </div>
+
+  <div class="sh">Arquitectura del sistema</div>
+  <div class="grid g3">
+    <div class="card green">
+      <div class="card-icon">⛰</div>
+      <div class="card-title">DEM propio</div>
+      <div class="card-body">Pendiente, aspecto y sombreado desde un DEM subido como Asset. Define <code>estructuralFav</code>: pendientes 15°–40°, la ventana morfológica más favorable para trampas estructurales.</div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">🛰</div>
+      <div class="card-title">ASTER — 8 índices SWIR/TIR/VNIR</div>
+      <div class="card-body">Alunita, caolinita, sericita, óxidos de Fe, OH, propilítica, sílice TIR y carbonatos TIR — la misma familia de índices del Módulo 4, aplicada aquí con más detalle sobre una sola escena.</div>
+    </div>
+    <div class="card teal">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">K-Means no supervisado</div>
+      <div class="card-body">Agrupa los píxeles en 8 clases sin etiquetas previas, a partir de bandas ASTER + índices + pendiente. Requiere inspección visual humana para decidir qué clusters son prospectivos.</div>
+    </div>
+  </div>
+
+  <div class="callout call-red">
+    <div class="callout-icon">🐛</div>
+    <div class="callout-body">
+      <div class="callout-title">Registro de depuración — 5 errores reales encontrados y corregidos</div>
+      Esta versión (v2.0 del usuario) llegó con un síntoma concreto: <em>"existe imagen ASTER pero no aparece"</em>. La causa no era un solo bug sino una combinación de cinco problemas, típica de scripts de GEE que crecen por iteraciones sucesivas.
+    </div>
+  </div>
+
+  <table class="mtable">
+    <thead><tr><th>#</th><th>Síntoma / riesgo</th><th>Causa real</th><th>Corrección aplicada</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td style="color:#8b949e;font-size:12px">"No aparece nada de ASTER"</td>
+        <td style="color:#8b949e;font-size:12px">Sin <code>filterDate</code> + <code>CLOUDCOVER&lt;10</code> muy estricto → fácil terminar con 0 escenas, sin ningún aviso.</td>
+        <td style="color:#8b949e;font-size:12px">Diagnóstico en cascada: cuenta escenas, reintenta sin nubes, reintenta sin fecha, e informa la causa exacta con <code>print()</code>.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td style="color:#8b949e;font-size:12px">Ninguna imagen ASTER cruda visible</td>
+        <td style="color:#8b949e;font-size:12px">Solo se visualizaban productos derivados (índices), casi todos con <code>shown=false</code>.</td>
+        <td style="color:#8b949e;font-size:12px">Se agregó una capa <code>📷 ASTER RGB</code> visible por defecto, para confirmar cobertura a simple vista.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td style="color:#8b949e;font-size:12px">La capa "Brechas Conocidas" desaparecía al hacer clic</td>
+        <td style="color:#8b949e;font-size:12px"><code>Map.layers().set(12, ...)</code> con índice fijo — sobrescribía silenciosamente la capa que ocupaba esa posición.</td>
+        <td style="color:#8b949e;font-size:12px">Capa dedicada creada una sola vez; el clic actualiza su contenido con <code>markerLayer.setEeObject(point)</code>.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td style="color:#8b949e;font-size:12px">Clusters K-Means poco informativos</td>
+        <td style="color:#8b949e;font-size:12px">Un único <code>unitScale(0,10000)</code> para bandas de escalas muy distintas (DN 1–255, índices ~0.8–2.5, pendiente 0–90°) aplastaba casi todo a ~0.</td>
+        <td style="color:#8b949e;font-size:12px">Cada banda se normaliza individualmente con percentiles 5–95 (<code>normalize01</code>), igual que en el Módulo 6.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td style="color:#8b949e;font-size:12px">Filtro de nubes descartaba casi todo</td>
+        <td style="color:#8b949e;font-size:12px"><code>CLOUDCOVER&lt;10</code> es muy exigente para zonas con nubosidad frecuente.</td>
+        <td style="color:#8b949e;font-size:12px">Subido a 30% como punto de partida, con reintento automático si aún da 0.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sh">Los 8 índices mineralógicos usados (idénticos al Módulo 4)</div>
+  <table class="mtable">
+    <thead><tr><th>Índice</th><th>Fórmula</th><th>Peso en favorabilidad Au</th></tr></thead>
+    <tbody>
+      <tr><td>Alunita<br><span class="ref-tag">Rowan et al. 2003 — Cuprite</span></td><td><span class="formula">B7 / B5</span></td><td class="wt wt-hi">30%</td></tr>
+      <tr><td>Sílice TIR<br><span class="ref-tag">Ninomiya 2003</span></td><td><span class="formula">(B13/B12)+(B13/B14)</span></td><td class="wt" style="color:var(--amber)">25%</td></tr>
+      <tr><td>Caolinita<br><span class="ref-tag">Ninomiya 2002</span></td><td><span class="formula">B6 / B5</span></td><td class="wt" style="color:#7ee787">15%</td></tr>
+      <tr><td>Óxidos de Fe<br><span class="ref-tag">Sabins 1999</span></td><td><span class="formula">B2 / B1</span></td><td class="wt" style="color:#7ee787">15%</td></tr>
+      <tr><td>Sericita<br><span class="ref-tag">Ninomiya 2002</span></td><td><span class="formula">B5 / B6</span></td><td class="wt" style="color:var(--muted)">8%</td></tr>
+      <tr><td>Grupos OH<br><span class="ref-tag">Rowan &amp; Mars 2003</span></td><td><span class="formula">(B6+B9)/(B8×2)</span></td><td class="wt" style="color:var(--muted)">7%</td></tr>
+      <tr><td>Propilítica/Clorita<br><span class="ref-tag">Corbett &amp; Leach 1998</span></td><td><span class="formula">B4 / B5</span></td><td class="wt" style="color:var(--muted)">—</td></tr>
+      <tr><td>Carbonatos TIR<br><span class="ref-tag">Ninomiya 2003</span></td><td><span class="formula">(B13+B11)/(B12×2)</span></td><td class="wt" style="color:var(--muted)">—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sh">Código completo corregido (v2.1) — listo para pegar en GEE</div>
+  <p>Este es un script monolítico (no está pensado para pegarse por fragmentos como en los Módulos 1–6). Cópialo completo de una sola vez en el Code Editor de GEE.</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">GEE JavaScript — Sistema completo</span><span class="code-note">v2.1 corregido · 672 líneas</span></div>
+    <pre id="anexoCode">/*
+================================================================================
+SISTEMA DE EXPLORACIÓN MINERAL AUTÓNOMO - v2.1 CORREGIDO
+Detección de Alteración Hidrotermal Asociada a Mineralización Aurífera
+Sin Muestras de Campo - Basado 100% en Teledetección + ML No Supervisado
+
+CORRECCIONES DE LA v2.0 → v2.1:
+  [1] Se agregó filtro de fecha ASTER 2000–2008-04-28 (límite real del SWIR)
+      con reintentos automáticos y diagnóstico si no hay escenas.
+  [2] Se agregó una capa RGB cruda de ASTER, VISIBLE por defecto, para poder
+      verificar a simple vista si hay cobertura — esto es lo que faltaba y
+      hacía parecer que "no aparecía" ninguna imagen ASTER.
+  [3] Corregido bug de Map.layers().set(12, ...): sobrescribía la capa de
+      Brechas conocidas en cada clic. Ahora se usa una capa dedicada con
+      setEeObject(), sin depender de índices fijos.
+  [4] Corregida la normalización para K-Means: antes se usaba un único
+      unitScale(0, 10000) para bandas de escalas muy distintas (DN 1-255,
+      índices ~0.8-2.5, pendiente 0-90°), lo que aplastaba casi todo a ~0.
+      Ahora cada banda se normaliza individualmente con percentiles 5-95.
+  [5] MAX_NUBES subido de 10% a 30% (10% es muy estricto y fácilmente deja
+      0 escenas en zonas con nubosidad frecuente).
+
+CORRECCIONES CIENTÍFICAS DE LA v1 → v2 (ya incluidas, sin cambios):
+  - Índice Sericita: B7/B6 → B5/B6
+  - Índice OH: (B7+B9)/(B8×2) → (B6+B9)/(B8×2) — Rowan &amp; Mars (2003)
+  - Índice Sílice TIR: B13/B12 → (B13/B12)+(B13/B14) — Ninomiya (2003)
+  - Índice Propilítica/Clorita añadido: B4/B5
+  - Ponderación rebalanceada para sistemas epitermales Au
+  - Escala de exportación TIR corregida a 90 m
+
+REFERENCIAS:
+  - Sabins (1999) — Remote Sensing: Principles and Interpretation
+  - Rowan et al. (2003) — Mapping hydrothermally altered rocks at Cuprite (Economic Geology)
+  - Rowan &amp; Mars (2003) — Lithologic mapping in the Mountain Pass area
+  - Ninomiya (2003) — Silica index and carbonate index from ASTER TIR
+  - Corbett &amp; Leach (1998) — Southwest Pacific Rim gold-copper systems
+================================================================================
+*/
+
+// ════════════════════════════════════════════════════════════════════════════
+// 0. CONFIGURACIÓN INICIAL
+// ════════════════════════════════════════════════════════════════════════════
+var aoiLocal = ee.FeatureCollection('projects/eddycc66/assets/POLIGONO_TIGRES_DE_ORO').geometry();
+var brechas  = ee.FeatureCollection('projects/eddycc66/assets/Brechas_dorado');
+
+Map.centerObject(aoiLocal, 13);
+Map.addLayer(aoiLocal, {color: 'white'}, '🔲 Límite del AOI', true);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 1. PROCESAMIENTO TOPOGRÁFICO
+// ════════════════════════════════════════════════════════════════════════════
+var dem       = ee.Image('projects/eddycc66/assets/dem_tigres_de_oro').clip(aoiLocal);
+var slope     = ee.Terrain.slope(dem);
+var aspect    = ee.Terrain.aspect(dem);
+var hillshade = ee.Terrain.hillshade(dem);
+
+// Zonas estructuralmente favorables: pendientes moderadas (15°–40°)
+var estructuralFav = slope.gt(15).and(slope.lt(40)).rename('Estructural');
+
+// ════════════════════════════════════════════════════════════════════════════
+// 2. PROCESAMIENTO ASTER MULTI-ESPECTRAL — CON DIAGNÓSTICO Y REINTENTOS
+// ════════════════════════════════════════════════════════════════════════════
+var FECHA_INICIO = '2000-01-01';
+var FECHA_FIN    = '2008-04-28'; // límite real del SWIR (falló en abril 2008)
+var MAX_NUBES    = 30;           // 10% era muy estricto; súbelo más si sigue en 0
+
+var asterColl = ee.ImageCollection('ASTER/AST_L1T_003')
+  .filterBounds(aoiLocal)
+  .filterDate(FECHA_INICIO, FECHA_FIN)
+  .filter(ee.Filter.lt('CLOUDCOVER', MAX_NUBES));
+
+var nEscenas = asterColl.size().getInfo();
+print('① Escenas ASTER SWIR válidas (fecha ' + FECHA_INICIO + ' a ' + FECHA_FIN +
+      ', nubes &lt;' + MAX_NUBES + '%):', nEscenas);
+
+if (nEscenas === 0) {
+  print('⚠ 0 escenas con ese filtro de nubes. Reintentando sin filtro de nubes...');
+  asterColl = ee.ImageCollection('ASTER/AST_L1T_003')
+    .filterBounds(aoiLocal)
+    .filterDate(FECHA_INICIO, FECHA_FIN);
+  nEscenas = asterColl.size().getInfo();
+  print('② Escenas ASTER SWIR sin filtro de nubes:', nEscenas);
+}
+
+if (nEscenas === 0) {
+  print('⚠ Sigue en 0 dentro de la ventana SWIR (2000–2008). Ampliando a TODO ' +
+        'el archivo ASTER (VNIR/TIR seguirán funcionando; el SWIR puede no ser confiable)...');
+  asterColl = ee.ImageCollection('ASTER/AST_L1T_003').filterBounds(aoiLocal);
+  nEscenas = asterColl.size().getInfo();
+  print('③ Escenas ASTER de cualquier fecha sobre el AOI:', nEscenas);
+}
+
+if (nEscenas === 0) {
+  print('🛑 CAUSA CONFIRMADA: no existe ninguna escena ASTER (de ningún tipo) sobre ' +
+        'tu polígono POLIGONO_TIGRES_DE_ORO en el catálogo de Google Earth Engine. ' +
+        'Por eso no aparece ninguna imagen ni índice derivado de ASTER — no es un ' +
+        'error de código, es que no hay dato fuente. Revisa que las coordenadas de ' +
+        'ese asset sean correctas, o usa Sentinel-2/Landsat en su lugar para esta zona.');
+} else {
+  print('✅ Hay cobertura ASTER utilizable — si aun así no ves la capa "📷 ASTER RGB" ' +
+        'en el mapa, revisa que su casilla esté marcada en el panel Layers (arriba a la derecha del mapa).');
+}
+
+var asterMedian = asterColl.median().clip(aoiLocal);
+
+// Bandas VNIR (15 m) + SWIR (30 m)
+// B01=0.52–0.60μm  B02=0.63–0.69μm  B3N=0.78–0.86μm
+// B04=1.60–1.70μm  B05=2.145–2.185μm B06=2.185–2.225μm
+// B07=2.235–2.285μm B08=2.295–2.365μm B09=2.360–2.430μm
+var asterBands = ['B01','B02','B3N','B04','B05','B06','B07','B08','B09'];
+var asterNames = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9'];
+var vnirSwir   = asterMedian.select(asterBands, asterNames);
+
+// Bandas TIR (90 m)
+// B10=8.125–8.475μm  B11=8.475–8.825μm  B12=8.925–9.275μm
+// B13=10.25–10.95μm  B14=10.95–11.65μm
+var tirBands = asterMedian.select(['B10','B11','B12','B13','B14']);
+
+// ── Capa cruda visible: esto es lo que faltaba en la v2.0 ────────────────
+// Falso color estándar ASTER: R=NIR(B3) G=Rojo(B2) B=Verde(B1)
+var asterRGB = vnirSwir.select(['B3', 'B2', 'B1']);
+Map.addLayer(asterRGB, {min: 20, max: 130}, '📷 ASTER RGB (falso color, verifica cobertura)', true);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 3. ÍNDICES MINERALÓGICOS
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── 3.1 SÍLICE (TIR) ─────────────────────────────────────────────────────
+// Ninomiya (2003): Silica Index compuesto — más robusto que ratio simple
+var siliceIndex = tirBands.select('B13').divide(tirBands.select('B12').add(0.001))
+  .add(tirBands.select('B13').divide(tirBands.select('B14').add(0.001)))
+  .rename('Silice_Index');
+
+// ─── 3.2 ALUNITA (SWIR) ───────────────────────────────────────────────────
+// Rowan et al. (2003, Cuprite): absorción ~2.17μm (B5), reflectancia ~2.26μm (B7)
+var alunitaIndex = vnirSwir.select('B7')
+  .divide(vnirSwir.select('B5').add(0.001))
+  .rename('Alunita_Index');
+
+// ─── 3.3 CAOLINITA (SWIR) ─────────────────────────────────────────────────
+var caolintaIndex = vnirSwir.select('B6')
+  .divide(vnirSwir.select('B5').add(0.001))
+  .rename('Caolinita_Index');
+
+// ─── 3.4 SERICITA / MUSCOVITA (SWIR) ─────────────────────────────────────
+// Ninomiya (2002): absorción principal sericita en ~2.20μm (B5)
+var sericitaIndex = vnirSwir.select('B5')
+  .divide(vnirSwir.select('B6').add(0.001))
+  .rename('Sericita_Index');
+
+// ─── 3.5 ÓXIDOS DE HIERRO (VNIR) ──────────────────────────────────────────
+var oxidosIndex = vnirSwir.select('B2')
+  .divide(vnirSwir.select('B1').add(0.001))
+  .rename('Oxidos_Index');
+
+// ─── 3.6 GRUPOS OH — ARCILLAS + CARBONATOS (SWIR) ─────────────────────────
+// Rowan &amp; Mars (2003): (B6+B9)/(B8×2)
+var ohIndex = vnirSwir.select('B6')
+  .add(vnirSwir.select('B9'))
+  .divide(vnirSwir.select('B8').multiply(2).add(0.001))
+  .rename('OH_Index');
+
+// ─── 3.7 PROPILÍTICA / CLORITA (SWIR) ────────────────────────────────────
+var propiliticaIndex = vnirSwir.select('B4')
+  .divide(vnirSwir.select('B5').add(0.001))
+  .rename('Propilitica_Index');
+
+// ─── 3.8 CARBONATOS (TIR) ─────────────────────────────────────────────────
+var carbonatoIndex = tirBands.select('B13').add(tirBands.select('B11'))
+  .divide(tirBands.select('B12').multiply(2).add(0.001))
+  .rename('Carbonato_Index');
+
+// ─── 3.9 NDVI (para máscara de vegetación) ────────────────────────────────
+var ndvi = vnirSwir.normalizedDifference(['B3','B2']).rename('NDVI');
+
+// ════════════════════════════════════════════════════════════════════════════
+// 4. FUNCIÓN DE NORMALIZACIÓN ROBUSTA (percentiles 5–95)
+// ════════════════════════════════════════════════════════════════════════════
+var normalize01 = function(img) {
+  var bandName = img.bandNames().get(0);
+  var stats = img.reduceRegion({
+    reducer: ee.Reducer.percentile([5, 95]),
+    geometry: aoiLocal,
+    scale: 90,
+    bestEffort: true,
+    maxPixels: 1e9
+  });
+  var vals   = stats.values();
+  var minVal = ee.Number(vals.get(0));
+  var maxVal = ee.Number(vals.get(1));
+  var diff   = maxVal.subtract(minVal);
+  var safeMax = ee.Algorithms.If(diff.gt(1e-10), maxVal, minVal.add(1));
+  return img
+    .subtract(minVal)
+    .divide(ee.Number(safeMax).subtract(minVal))
+    .clamp(0, 1)
+    .rename([bandName]);
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// 5. MODELO DE FAVORABILIDAD PARA SISTEMA EPITERMAL AU
+// ════════════════════════════════════════════════════════════════════════════
+//   Alunita      30% — alteración argílica avanzada, proxy más diagnóstico de Au
+//   Sílice       25% — silicificación hidrotermal
+//   Caolinita    15% — asociada a AAS y Au supérgeno
+//   Óxidos Fe    15% — gossans / halos de oxidación
+//   Sericita      8% — alteración fílica
+//   OH general    7% — halo externo de alteración
+
+var favorabilidadAu = normalize01(alunitaIndex).multiply(0.30)
+  .add(normalize01(siliceIndex).multiply(0.25))
+  .add(normalize01(caolintaIndex).multiply(0.15))
+  .add(normalize01(oxidosIndex).multiply(0.15))
+  .add(normalize01(sericitaIndex).multiply(0.08))
+  .add(normalize01(ohIndex).multiply(0.07))
+  .rename('Favorabilidad_Au');
+
+// ════════════════════════════════════════════════════════════════════════════
+// 6. STACK DE VARIABLES PARA CLUSTERING ML — NORMALIZACIÓN CORREGIDA
+// ════════════════════════════════════════════════════════════════════════════
+var mlInput = ee.Image.cat([
+  vnirSwir.select(['B1','B2','B3','B4','B5','B6','B7','B8','B9']),
+  siliceIndex,
+  alunitaIndex,
+  caolintaIndex,
+  sericitaIndex,
+  oxidosIndex,
+  ohIndex,
+  propiliticaIndex,
+  slope,
+  estructuralFav
+]).unmask(0);
+
+// CORREGIDO: antes un único unitScale(0,10000) aplastaba casi todas las
+// bandas a ~0 (DN 1-255, índices ~0.8-2.5 y pendiente 0-90° no comparten
+// escala). Ahora cada banda se normaliza individualmente con percentiles.
+var mlBandNames    = mlInput.bandNames();
+var mlNormalizadas = mlBandNames.map(function (name) {
+  return normalize01(mlInput.select([name]));
+});
+var mlInputNorm = ee.ImageCollection.fromImages(mlNormalizadas).toBands().rename(mlBandNames);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 7. CLUSTERING NO SUPERVISADO — K-MEANS
+// ════════════════════════════════════════════════════════════════════════════
+var samplesForClustering = mlInputNorm.sample({
+  region: aoiLocal,
+  scale: 60,
+  numPixels: 3000,
+  seed: 42,
+  geometries: false
+});
+
+var clusterer = ee.Clusterer.wekaKMeans({
+  nClusters: 8,
+  init: 0,
+  canopies: false,
+  maxIterations: 100,
+  distanceFunction: 'Euclidean'
+}).train(samplesForClustering);
+
+var clusters = mlInputNorm.cluster(clusterer).rename('Cluster');
+
+// ════════════════════════════════════════════════════════════════════════════
+// 8. ZONA DE MÁXIMA PRIORIDAD MINERAL
+//    INSTRUCCIONES: inspecciona visualmente los clusters, anota cuáles
+//    coinciden con zonas de alta favorabilidad y actualiza prospectiveClusters
+// ════════════════════════════════════════════════════════════════════════════
+var prospectiveClusters = ee.List([2, 5, 6]); // ← AJUSTAR TRAS INSPECCIÓN VISUAL
+
+var targetClusters = prospectiveClusters.iterate(function (clusterID, image) {
+  var mask = clusters.eq(ee.Number(clusterID));
+  return ee.Image(image).or(mask);
+}, ee.Image(0));
+targetClusters = ee.Image(targetClusters).selfMask().rename('Target_Clusters');
+
+// Máscaras de calidad
+var mascaraVegetacion = ndvi.lt(0.3);          // excluir vegetación densa
+var mascaraPendiente  = slope.gt(8);           // excluir planicies
+
+// Zona final: umbral de favorabilidad + cluster ML + máscaras
+var zonaProspectiva = favorabilidadAu.gt(0.55)
+  .and(targetClusters.eq(1))
+  .and(mascaraVegetacion)
+  .and(mascaraPendiente)
+  .selfMask()
+  .rename('Zona_Maxima_Prioridad');
+
+// ════════════════════════════════════════════════════════════════════════════
+// 9. VISUALIZACIÓN
+// ════════════════════════════════════════════════════════════════════════════
+Map.addLayer(hillshade, {min: 120, max: 250}, 'Relieve (Hillshade)', true, 0.35);
+
+Map.addLayer(favorabilidadAu,
+  {min: 0, max: 1, palette: ['#0000FF', '#00FFFF', '#00FF00', '#FFFF00', '#FF8C00', '#FF0000']},
+  '1️⃣ Favorabilidad Au (Índices corregidos)', true);
+
+Map.addLayer(clusters.randomVisualizer(), {}, '2️⃣ Clusters K-Means (8 clases)', true);
+
+Map.addLayer(zonaProspectiva, {palette: ['#FF00FF']}, '🎯 ZONA MÁXIMA PRIORIDAD Au', true);
+
+// Índices individuales (apagados por defecto — activa la casilla para diagnóstico)
+Map.addLayer(siliceIndex,
+  {min: 1.0, max: 2.4, palette: ['navy', 'white', 'red']},
+  'Índice Sílice TIR (Ninomiya 2003)', false);
+
+Map.addLayer(alunitaIndex,
+  {min: 0.9, max: 1.3, palette: ['blue', 'yellow', 'orange']},
+  'Índice Alunita SWIR', false);
+
+Map.addLayer(sericitaIndex,
+  {min: 0.9, max: 1.2, palette: ['purple', 'white', 'green']},
+  'Índice Sericita SWIR', false);
+
+Map.addLayer(oxidosIndex,
+  {min: 0.8, max: 1.4, palette: ['white', 'brown', 'darkred']},
+  'Índice Óxidos Fe (Gossans)', false);
+
+Map.addLayer(caolintaIndex,
+  {min: 0.9, max: 1.2, palette: ['lightblue', 'cyan', 'blue']},
+  'Índice Caolinita SWIR', false);
+
+Map.addLayer(propiliticaIndex,
+  {min: 0.8, max: 1.3, palette: ['darkgreen', 'lime', 'yellow']},
+  'Índice Propilítica/Clorita (B4/B5)', false);
+
+Map.addLayer(ohIndex,
+  {min: 0.9, max: 1.15, palette: ['gray', 'pink', 'magenta']},
+  'Índice OH — Arcillas+Carbonatos', false);
+
+// RGB falso color mineralógico: R=Alunita, G=Sericita, B=Óxidos
+var rgbMineralogico = ee.Image.cat([
+  alunitaIndex.unitScale(0.9, 1.3),
+  sericitaIndex.unitScale(0.9, 1.2),
+  oxidosIndex.unitScale(0.8, 1.4)
+]);
+Map.addLayer(rgbMineralogico, {min: 0, max: 1}, 'RGB Mineralógico (Alunita/Sericita/Óxidos)', false);
+
+Map.addLayer(brechas, {color: '00FF00'}, '✅ Brechas Conocidas (Validación)', true, 0.7);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 10. UI — INSPECTOR DE CLUSTER EN TIEMPO REAL
+// ════════════════════════════════════════════════════════════════════════════
+var clusterPanel = ui.Panel({
+  style: {position: 'top-right', padding: '10px', width: '220px',
+          border: '1px solid #ccc', backgroundColor: 'white'}
+});
+clusterPanel.add(ui.Label('🔍 INSPECTOR DE CLUSTER', {fontWeight: 'bold', color: 'navy'}));
+clusterPanel.add(ui.Label('Haz clic en el mapa', {fontSize: '12px', color: 'gray'}));
+var clusterLabel    = ui.Label('Cluster: —');
+var favLabel        = ui.Label('Favorabilidad: —');
+var interpretaLabel = ui.Label('Tipo: —', {fontSize: '12px', color: 'gray'});
+clusterPanel.add(clusterLabel);
+clusterPanel.add(favLabel);
+clusterPanel.add(interpretaLabel);
+Map.add(clusterPanel);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 11. UI — PANEL ESPECTRAL INTERACTIVO
+// ════════════════════════════════════════════════════════════════════════════
+var inspector = ui.Panel({
+  style: {width: '440px', position: 'bottom-left', padding: '10px',
+          border: '2px solid navy', backgroundColor: 'white'}
+});
+ui.root.insert(0, inspector);
+
+inspector.add(ui.Label('📊 ANÁLISIS ESPECTRAL Y MINERALÓGICO',
+  {fontWeight: 'bold', fontSize: '15px', color: 'navy'}));
+inspector.add(ui.Label('Haz clic en el mapa para analizar un píxel',
+  {fontSize: '12px', color: 'gray', margin: '0 0 8px 0'}));
+
+// CORREGIDO: capa dedicada para el marcador de clic, en vez de
+// Map.layers().set(12, ...) que sobrescribía "Brechas Conocidas".
+var markerLayer = ui.Map.Layer(ee.Geometry.MultiPoint([]), {color: 'yellow'}, '📍 Punto analizado', false);
+Map.layers().add(markerLayer);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 12. EVENTO OnClick — INSPECCIÓN DE PÍXEL
+// ════════════════════════════════════════════════════════════════════════════
+Map.onClick(function (coords) {
+  var point = ee.Geometry.Point([coords.lon, coords.lat]);
+
+  // Actualizar inspector de cluster (panel derecho)
+  var clusterVal = clusters.reduceRegion({
+    reducer: ee.Reducer.first(), geometry: point, scale: 30
+  });
+  clusterVal.evaluate(function (r) {
+    if (r &amp;&amp; r.Cluster !== null &amp;&amp; r.Cluster !== undefined) {
+      clusterLabel.setValue('Cluster: ' + Math.round(r.Cluster));
+    }
+  });
+
+  inspector.clear();
+  inspector.add(ui.Label('⏳ Procesando...', {color: 'blue', fontWeight: 'bold'}));
+
+  markerLayer.setEeObject(point);
+  markerLayer.setShown(true);
+
+  // Firma espectral VNIR-SWIR
+  var chart = ui.Chart.image.regions({
+    image: vnirSwir,
+    regions: point,
+    reducer: ee.Reducer.mean(),
+    scale: 30,
+    xLabels: [0.56, 0.66, 0.81, 1.65, 2.165, 2.205, 2.26, 2.33, 2.395]
+  }).setOptions({
+    title: 'Firma Espectral VNIR-SWIR (ASTER)',
+    hAxis: {title: 'Longitud de Onda (μm)', titleTextStyle: {italic: false}},
+    vAxis: {title: 'Reflectancia (DN)', titleTextStyle: {italic: false}},
+    lineWidth: 3, pointSize: 6,
+    series: {0: {color: 'darkred'}},
+    legend: 'none',
+    backgroundColor: '#f5f5f5'
+  });
+
+  // Valores de todos los índices
+  var valores = ee.Image.cat([
+    favorabilidadAu,
+    siliceIndex,
+    alunitaIndex,
+    caolintaIndex,
+    sericitaIndex,
+    oxidosIndex,
+    ohIndex,
+    propiliticaIndex,
+    clusters,
+    ndvi
+  ]).reduceRegion({
+    reducer: ee.Reducer.first(), geometry: point, scale: 30
+  });
+
+  valores.evaluate(function (v) {
+    inspector.clear();
+    inspector.add(ui.Label('📊 ANÁLISIS ESPECTRAL Y MINERALÓGICO',
+      {fontWeight: 'bold', fontSize: '15px', color: 'navy', margin: '0 0 8px 0'}));
+    inspector.add(chart);
+    inspector.add(ui.Label('─────────────────────────────────', {color: '#ccc'}));
+    inspector.add(ui.Label('📈 ÍNDICES MINERALÓGICOS:',
+      {fontWeight: 'bold', margin: '8px 0 4px 0'}));
+
+    var fav = (v &amp;&amp; v.Favorabilidad_Au !== null) ? v.Favorabilidad_Au : 0;
+    var favColor = fav &gt; 0.6 ? '#1a7a1a' : (fav &gt; 0.4 ? '#cc7700' : '#cc0000');
+    inspector.add(ui.Label('• Favorabilidad Au: ' + fav.toFixed(3),
+      {fontWeight: 'bold', color: favColor}));
+
+    var safe = function (val) { return (v &amp;&amp; v[val] !== null &amp;&amp; v[val] !== undefined) ? v[val].toFixed(3) : 'N/D'; };
+    inspector.add(ui.Label('• Sílice TIR (Ninomiya): ' + safe('Silice_Index')));
+    inspector.add(ui.Label('• Alunita SWIR:          ' + safe('Alunita_Index')));
+    inspector.add(ui.Label('• Caolinita SWIR:        ' + safe('Caolinita_Index')));
+    inspector.add(ui.Label('• Sericita B5/B6:        ' + safe('Sericita_Index')));
+    inspector.add(ui.Label('• Óxidos Fe:             ' + safe('Oxidos_Index')));
+    inspector.add(ui.Label('• OH (Rowan &amp; Mars):     ' + safe('OH_Index')));
+    inspector.add(ui.Label('• Propilítica B4/B5:     ' + safe('Propilitica_Index')));
+    inspector.add(ui.Label('• NDVI:                  ' + safe('NDVI')));
+    inspector.add(ui.Label('• Cluster ML:            ' +
+      (v &amp;&amp; v.Cluster !== null ? Math.round(v.Cluster) : 'N/D')));
+
+    inspector.add(ui.Label('─────────────────────────────────', {color: '#ccc'}));
+    inspector.add(ui.Label('🔬 INTERPRETACIÓN GEOLÓGICA:',
+      {fontWeight: 'bold', margin: '8px 0 4px 0'}));
+
+    var hayHallazgo = false;
+
+    if (v &amp;&amp; v.Alunita_Index &gt; 1.05) {
+      inspector.add(ui.Label('✓ Alteración argílica avanzada (AAS) — alta sulfuración Au',
+        {color: '#1a7a1a', fontWeight: 'bold'}));
+      hayHallazgo = true;
+    }
+    if (v &amp;&amp; v.Silice_Index &gt; 2.0) {
+      inspector.add(ui.Label('✓ Silicificación intensa — posible brecha/stockwork/veta',
+        {color: '#1a7a1a'}));
+      hayHallazgo = true;
+    }
+    if (v &amp;&amp; v.Oxidos_Index &gt; 1.15) {
+      inspector.add(ui.Label('✓ Gossan / halo de óxidos Fe — mineralización sulfurada oxidada',
+        {color: '#cc7700'}));
+      hayHallazgo = true;
+    }
+    if (v &amp;&amp; v.Sericita_Index &gt; 1.05) {
+      inspector.add(ui.Label('✓ Alteración fílica (sericita) — epitermal baja sulfuración',
+        {color: '#cc7700'}));
+      hayHallazgo = true;
+    }
+    if (v &amp;&amp; v.Caolinita_Index &gt; 1.05 &amp;&amp; v.Alunita_Index &gt; 1.0) {
+      inspector.add(ui.Label('✓ Caolinita + Alunita — zona de alteración supérgena sobre Au',
+        {color: '#1a7a1a'}));
+      hayHallazgo = true;
+    }
+    if (v &amp;&amp; v.Propilitica_Index &lt; 0.95) {
+      inspector.add(ui.Label('• Posible propilítica/clorita — halo externo distal',
+        {color: 'gray'}));
+    }
+    if (v &amp;&amp; v.NDVI &gt; 0.3) {
+      inspector.add(ui.Label('⚠ NDVI alto — vegetación puede enmascarar señal espectral',
+        {color: '#cc0000'}));
+    }
+    if (!hayHallazgo &amp;&amp; fav &lt; 0.4) {
+      inspector.add(ui.Label('✗ Baja probabilidad de alteración hidrotermal',
+        {color: '#cc0000'}));
+    }
+
+    favLabel.setValue('Favorabilidad: ' + fav.toFixed(3));
+    var tipoSistema = '—';
+    if (v &amp;&amp; v.Alunita_Index &gt; 1.05) tipoSistema = 'Alta sulfuración (Au)';
+    else if (v &amp;&amp; v.Sericita_Index &gt; 1.05) tipoSistema = 'Baja sulfuración (Au-Ag)';
+    else if (v &amp;&amp; v.Oxidos_Index &gt; 1.15) tipoSistema = 'Gossan / oxidado';
+    interpretaLabel.setValue('Tipo: ' + tipoSistema);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// 13. LEYENDA
+// ════════════════════════════════════════════════════════════════════════════
+var legend = ui.Panel({
+  style: {position: 'bottom-right', padding: '8px 14px', backgroundColor: 'white',
+          border: '1px solid #ccc'}
+});
+legend.add(ui.Label('EXPLORACIÓN Au — LEYENDA',
+  {fontWeight: 'bold', fontSize: '13px', color: 'navy', margin: '0 0 6px 0'}));
+
+var addRow = function (color, label) {
+  var row = ui.Panel({layout: ui.Panel.Layout.Flow('horizontal'), style: {margin: '2px 0'}});
+  row.add(ui.Label('█', {color: color, fontSize: '18px', margin: '0 6px 0 0'}));
+  row.add(ui.Label(label, {fontSize: '12px'}));
+  legend.add(row);
+};
+
+addRow('#FF00FF', 'Zona Máxima Prioridad Au');
+addRow('#FF0000', 'Alta Favorabilidad (&gt;0.75)');
+addRow('#FF8C00', 'Moderada Favorabilidad (0.55–0.75)');
+addRow('#FFFF00', 'Baja-Moderada (0.35–0.55)');
+addRow('#00FF00', 'Brechas conocidas (validación)');
+legend.add(ui.Label('────────────────', {color: '#ccc', margin: '4px 0'}));
+legend.add(ui.Label('RGB Mineralógico:', {fontWeight: 'bold', fontSize: '12px'}));
+legend.add(ui.Label('R=Alunita  G=Sericita  B=Óxidos', {fontSize: '11px', color: 'gray'}));
+Map.add(legend);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 14. EXPORTACIONES
+//     NOTA: TIR se exporta a 90 m (resolución nativa), SWIR/VNIR a 30 m
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── Producto 1: Stack completo VNIR+SWIR (30 m) ──────────────────────────
+Export.image.toDrive({
+  image: ee.Image.cat([
+    zonaProspectiva.unmask(0).toFloat().rename('Zona_Prioridad_Au'),
+    favorabilidadAu.toFloat().rename('Favorabilidad_Au'),
+    clusters.toFloat().rename('Clusters_KMeans'),
+    alunitaIndex.toFloat().rename('Alunita_B7B5'),
+    caolintaIndex.toFloat().rename('Caolinita_B6B5'),
+    sericitaIndex.toFloat().rename('Sericita_B5B6'),
+    oxidosIndex.toFloat().rename('Oxidos_Fe_B2B1'),
+    ohIndex.toFloat().rename('OH_B6B9_B8'),
+    propiliticaIndex.toFloat().rename('Propilitica_B4B5')
+  ]),
+  description: 'Stack_Completo_VNIR_SWIR_30m',
+  folder: 'GEE_Exploracion_Mineral_Au',
+  region: aoiLocal,
+  scale: 30,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+// ── Producto 2: Índices TIR (90 m — resolución nativa) ────────────────────
+Export.image.toDrive({
+  image: ee.Image.cat([
+    siliceIndex.toFloat().rename('Silice_Ninomiya2003'),
+    carbonatoIndex.toFloat().rename('Carbonatos_TIR')
+  ]),
+  description: 'Indices_TIR_90m_Nativos',
+  folder: 'GEE_Exploracion_Mineral_Au',
+  region: aoiLocal,
+  scale: 90,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+// ── Producto 3: Mapa de favorabilidad Au (30 m) ───────────────────────────
+Export.image.toDrive({
+  image: favorabilidadAu.toFloat(),
+  description: 'Favorabilidad_Au_Epitermal',
+  folder: 'GEE_Exploracion_Mineral_Au',
+  region: aoiLocal,
+  scale: 30,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+// ── Producto 4: Clusters K-Means (30 m) ──────────────────────────────────
+Export.image.toDrive({
+  image: clusters.toFloat(),
+  description: 'Clusters_KMeans_8clases',
+  folder: 'GEE_Exploracion_Mineral_Au',
+  region: aoiLocal,
+  scale: 30,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+// ── Producto 5: RGB mineralógico para visualización (30 m) ────────────────
+var rgbExport = ee.Image.cat([
+  alunitaIndex.unitScale(0.9, 1.3).multiply(255),
+  sericitaIndex.unitScale(0.9, 1.2).multiply(255),
+  oxidosIndex.unitScale(0.8, 1.4).multiply(255)
+]).toByte();
+
+Export.image.toDrive({
+  image: rgbExport,
+  description: 'RGB_Mineralogico_Alunita_Sericita_Oxidos',
+  folder: 'GEE_Exploracion_Mineral_Au',
+  region: aoiLocal,
+  scale: 30,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+// ── Producto 6: Zona prospectiva vectorizada (shapefile) ──────────────────
+var vectores = zonaProspectiva.reduceToVectors({
+  geometry: aoiLocal,
+  scale: 30,
+  geometryType: 'polygon',
+  eightConnected: false,
+  maxPixels: 1e9,
+  bestEffort: true
+});
+
+Export.table.toDrive({
+  collection: vectores,
+  description: 'Zonas_Prospectivas_Au_Vector',
+  folder: 'GEE_Exploracion_Mineral_Au',
+  fileFormat: 'SHP'
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// 15. ESTADÍSTICAS Y RESUMEN CONSOLA
+// ════════════════════════════════════════════════════════════════════════════
+var pixelCount = zonaProspectiva.reduceRegion({
+  reducer: ee.Reducer.count(),
+  geometry: aoiLocal,
+  scale: 30,
+  maxPixels: 1e9
+});
+
+print('══════════════════════════════════════════════════════');
+print('🥇 EXPLORACIÓN MINERAL Au — SISTEMA CORREGIDO v2.1');
+print('══════════════════════════════════════════════════════');
+print('📦 EXPORTACIONES (6 productos, en la pestaña Tasks):');
+print('  1. Stack_Completo_VNIR_SWIR_30m.tif   (9 bandas)');
+print('  2. Indices_TIR_90m_Nativos.tif         (2 bandas, 90 m)');
+print('  3. Favorabilidad_Au_Epitermal.tif      (continua 0-1)');
+print('  4. Clusters_KMeans_8clases.tif         (0-7)');
+print('  5. RGB_Mineralogico_*.tif              (visualización)');
+print('  6. Zonas_Prospectivas_Au_Vector.shp    (polígonos)');
+print('══════════════════════════════════════════════════════');
+print('📊 Píxeles en zona de máxima prioridad Au:');
+print(pixelCount);
+print('🎯 Clusters prospectivos (ajustar tras inspección):');
+print(prospectiveClusters);
+print('══════════════════════════════════════════════════════');
+print('💡 WORKFLOW RECOMENDADO:');
+print('  PASO 1 → Revisa el mensaje "①②③" de arriba: confirma que SÍ hay ASTER');
+print('  PASO 2 → Activar capa "Clusters K-Means" y hacer clic');
+print('           en zonas de alta favorabilidad (rojo/naranja)');
+print('  PASO 3 → Anotar IDs de clusters → actualizar prospectiveClusters');
+print('  PASO 4 → Ajustar umbral .gt(0.55) si necesitas más/menos área');
+print('  PASO 5 → Ejecutar exportaciones desde pestaña Tasks');
+print('  PASO 6 → QGIS/ArcGIS → superponer con geología regional');
+print('  PASO 7 → Validar con capas de brechas conocidas');
+print('══════════════════════════════════════════════════════');
+print('⚠ NOTA: ASTER detecta halos de ALTERACIÓN (proxies de Au).');
+print('  La confirmación de oro requiere muestreo geoquímico de campo.');
+print('══════════════════════════════════════════════════════');
+</pre>
+  </div>
+
+  <div class="sh">Cómo leer el diagnóstico en consola</div>
+  <div class="pipeline">
+    <div class="pipe-item">
+      <div class="pipe-dot pd-blue">①</div>
+      <div class="pipe-body">
+        <div class="pipe-title">Escenas con fecha 2000–2008 y nubes &lt;30%</div>
+        <div class="pipe-desc">Si es mayor a 0, todo sigue normal. Si es 0, el script reintenta automáticamente.</div>
+      </div>
+    </div>
+    <div class="pipe-item">
+      <div class="pipe-dot pd-amber">②</div>
+      <div class="pipe-body">
+        <div class="pipe-title">Reintento sin filtro de nubes</div>
+        <div class="pipe-desc">Confirma si el problema era el umbral de nubes, no la disponibilidad real de escenas.</div>
+      </div>
+    </div>
+    <div class="pipe-item">
+      <div class="pipe-dot pd-red" style="background:#3d1010;color:var(--red)">③</div>
+      <div class="pipe-body">
+        <div class="pipe-title">Reintento con todo el archivo ASTER (sin límite de fecha)</div>
+        <div class="pipe-desc">Si esto también da 0, el mensaje final te lo dice explícitamente: no hay ninguna escena ASTER sobre ese polígono — no es un bug, es ausencia de dato fuente.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout call-red">
+    <div class="callout-icon">🔬</div>
+    <div class="callout-body">
+      <div class="callout-title">Advertencia científica fundamental</div>
+      Este sistema detecta <strong>halos de alteración hidrotermal</strong> — proxies indirectos de mineralización aurífera. La presencia de alunita, sílice o caolinita no confirma oro económico. La confirmación requiere muestreo geoquímico (Au en roca/suelo) y, eventualmente, perforación exploratoria. Es una herramienta de priorización para el trabajo de campo, no un detector directo de oro.
+    </div>
+  </div>
+
+  <div class="lesson-nav">
+    <button class="nav-prev" onclick="go(5)">← Fusión + Campo</button>
+    <span class="nav-center">Anexo — Fin del curso ✓</span>
+    <button class="nav-next" onclick="go(0)" style="background:#0d3319;border-color:var(--green)">Volver al inicio ↺</button>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+var cur = 0;
+var TOTAL = 7;
+function go(n) {
+  document.querySelectorAll('.lesson').forEach(function(el,i){ el.classList.toggle('active',i===n); });
+  document.querySelectorAll('.tab-btn').forEach(function(el,i){ el.classList.toggle('active',i===n); });
+  // Nota: se usa '.sb-nav' (no '.sb-link') porque .sb-link también decora las
+  // etiquetas de referencias bibliográficas — mezclarlas desalinea los índices.
+  document.querySelectorAll('.sb-nav').forEach(function(el,i){ el.classList.toggle('active',i===n); });
+  for(var i=0;i<TOTAL;i++){
+    var dot=document.getElementById('pd'+i);
+    var lbl=document.getElementById('pl'+i);
+    var line=document.getElementById('pl-'+i);
+    dot.className='prog-dot'+(i<n?' done':i===n?' active':'');
+    lbl.className='prog-label'+(i===n?' active':'');
+    if(line) line.className='prog-line'+(i<n?' done':'');
+  }
+  cur=n;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
