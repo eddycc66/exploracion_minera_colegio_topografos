@@ -1233,33 +1233,9 @@ code{font-family:'Cascadia Code','Fira Code','Courier New',monospace;background:
     <div class="code-header"><span class="code-lang">GEE JavaScript — Sistema completo</span><span class="code-note">v2.1 corregido · 672 líneas</span></div>
     <pre id="anexoCode">/*
 ================================================================================
-SISTEMA DE EXPLORACIÓN MINERAL AUTÓNOMO - v2.1 CORREGIDO
+SISTEMA DE EXPLORACIÓN MINERAL AUTÓNOMO - v2.1 Autor Spatialmind S.R.L.
 Detección de Alteración Hidrotermal Asociada a Mineralización Aurífera
 Sin Muestras de Campo - Basado 100% en Teledetección + ML No Supervisado
-
-CORRECCIONES DE LA v2.0 → v2.1:
-  [1] Se agregó filtro de fecha ASTER 2000–2008-04-28 (límite real del SWIR)
-      con reintentos automáticos y diagnóstico si no hay escenas.
-  [2] Se agregó una capa RGB cruda de ASTER, VISIBLE por defecto, para poder
-      verificar a simple vista si hay cobertura — esto es lo que faltaba y
-      hacía parecer que "no aparecía" ninguna imagen ASTER.
-  [3] Corregido bug de Map.layers().set(12, ...): sobrescribía la capa de
-      Brechas conocidas en cada clic. Ahora se usa una capa dedicada con
-      setEeObject(), sin depender de índices fijos.
-  [4] Corregida la normalización para K-Means: antes se usaba un único
-      unitScale(0, 10000) para bandas de escalas muy distintas (DN 1-255,
-      índices ~0.8-2.5, pendiente 0-90°), lo que aplastaba casi todo a ~0.
-      Ahora cada banda se normaliza individualmente con percentiles 5-95.
-  [5] MAX_NUBES subido de 10% a 30% (10% es muy estricto y fácilmente deja
-      0 escenas en zonas con nubosidad frecuente).
-
-CORRECCIONES CIENTÍFICAS DE LA v1 → v2 (ya incluidas, sin cambios):
-  - Índice Sericita: B7/B6 → B5/B6
-  - Índice OH: (B7+B9)/(B8×2) → (B6+B9)/(B8×2) — Rowan &amp; Mars (2003)
-  - Índice Sílice TIR: B13/B12 → (B13/B12)+(B13/B14) — Ninomiya (2003)
-  - Índice Propilítica/Clorita añadido: B4/B5
-  - Ponderación rebalanceada para sistemas epitermales Au
-  - Escala de exportación TIR corregida a 90 m
 
 REFERENCIAS:
   - Sabins (1999) — Remote Sensing: Principles and Interpretation
